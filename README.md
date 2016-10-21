@@ -1,6 +1,6 @@
 # README #
 
-_-* datavYZ *-_
+__- * datavYZ * -__
 
 A software for data visualization and figure production in the scientific workflow
 
