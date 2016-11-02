@@ -6,7 +6,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from PyQt5 import QtGui, QtWidgets, QtCore
 import numpy as np
 import matplotlib.pyplot as plt
-sys.path.append('../')
+sys.path.append('../common_libraries')
 from graphs.my_graph import set_plot, put_list_of_figs_to_svg_fig
 
 def get_figure_list(DATA_FILE):
@@ -64,7 +64,7 @@ class Window(QtWidgets.QMainWindow):
         self.filename = get_list_of_temp_files()[self.i_plot] # on /tmp/        
         super(Window, self).__init__(parent)
         self.setWindowIcon(QtGui.QIcon('my_logo.png'))
-        self.setWindowTitle('.-* datavYZ *-.     Data vizualization software')
+        self.setWindowTitle('.-* datavYZ *-.     Data vizualization software -')
         self.setGeometry(50,50,500,70)
 
         # buttons
