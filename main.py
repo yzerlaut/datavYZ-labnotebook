@@ -7,16 +7,11 @@ from PyQt5 import QtGui, QtWidgets, QtCore
 import numpy as np
 import matplotlib.pyplot as plt
 sys.path.append('../common_libraries')
-from graphs.my_graph import set_plot, put_list_of_figs_to_svg_fig
+from analyze_datafile import generate_figs
 
 def get_figure_list(DATA_FILE):
     plt.close('all')
-    data = np.load(DATA_FILE)
-    exec(str(data['plot']))
-    FIG_LIST = []
-    for i in plt.get_fignums():
-        FIG_LIST.append(plt.figure(i))
-    return FIG_LIST
+    return generate_figs(DATA_FILE)
     
 def create_window(parent, FIG_LIST):
 
@@ -72,11 +67,14 @@ class Window(QtWidgets.QMainWindow):
         btnq.clicked.connect(self.close_app)
         btn1 = QtWidgets.QPushButton("Open File", self)
         btn1.clicked.connect(self.file_open)
+        btn11 = QtWidgets.QPushButton("Set Folder", self)
+        btn11.clicked.connect(self.folder_open)
         btn2 = QtWidgets.QPushButton("Save as SVG", self)
         btn2.clicked.connect(self.save_as_svg)
         btn3 = QtWidgets.QPushButton("Save as PNG", self)
         btn3.clicked.connect(self.save_as_png)
-        for btn, shift in zip([btn1, btn2, btn3], 100*np.arange(1,4)):
+        BTNS = [btn1, btn11, btn2, btn3]
+        for btn, shift in zip(BTNS, 100*np.arange(1,len(BTNS)+1)):
             btn.move(shift, 0)
 
         # quit shortcut
@@ -132,10 +130,14 @@ class Window(QtWidgets.QMainWindow):
 
     def file_open(self):
         name=QtWidgets.QFileDialog.getOpenFileName(self, 'Open File')
-        print(name)
         self.filename = name[0]
         self.update_plot()    
 
+    def folder_open(self):
+        name=QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
+        print(name)
+        self.filename = name[0]
+        # self.update_plot()    
         
     def save_as_svg(self):
         put_list_of_figs_to_svg_fig(self.FIG_LIST,\
