@@ -31,7 +31,7 @@ def initialize_quantities_given_datafile(main, filename=None):
     if len(filename.split('.npz'))>1: # analysis within the datafile ! just execute it !
         window = None
     elif len(filename.split('.abf'))>1:
-        main.args = {'x1':0., 'x2':3., 'dx':3., 'y1':-72., 'y2':0., 'dy':72.}
+        main.args = {'x1':0., 'x2':3., 'dx':3., 'y1':-80., 'y2':0., 'dy':80.}
         window = FocusMenu(main)
     else:
         main.args, window = None, None

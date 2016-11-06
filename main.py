@@ -34,8 +34,11 @@ def create_window(parent, FIG_LIST):
     layout = QtWidgets.QGridLayout(window)
     for ic in range(len(CANVAS)):
         layout.addWidget(CANVAS[ic], int(ic/3), ic%3)
-    toolbar = NavigationToolbar(CANVAS[0], parent)
-    layout.addWidget(toolbar)
+        
+    # == # adding the matplotlib toolbar ?? 
+    # toolbar = NavigationToolbar(CANVAS[0], parent)
+    # layout.addWidget(toolbar)
+    
     window.setLayout(layout)
     return window
 
@@ -74,12 +77,12 @@ class Window(QtWidgets.QMainWindow):
             self.fileMenu.addAction(action)
 
         self.i_plot = 0
-        self.FIG_LIST = []
+        self.FIG_LIST, self.args = [], {}
         try:
             self.filename, self.folder=np.load('__pycache__/last_datafile.npy')
             self.args, self.window2 = initialize_quantities_given_datafile(self)
         except FileNotFoundError:
-            self.folder = '/tmp/'
+            self.folder = '/tmp/' # TO be Changed for Cross-Platform implementation !!
             self.filename = self.folder+\
                 get_list_of_files(self.folder)[self.i_plot]
             self.args = {}
@@ -100,9 +103,9 @@ class Window(QtWidgets.QMainWindow):
         
     def update_params_and_windows(self):
         self.folder = os.path.split(self.filename)[0]+os.path.sep
-        self.args, self.window2 = initialize_quantities_given_datafile(self)
-        if self.window2 is not None:
-            self.window2.show()
+        # if self.window2 is not None:
+        #     self.args, self.window2 = initialize_quantities_given_datafile(self)
+        #     self.window2.show()
         self.update_plot()
         
     def close_app(self):
@@ -111,8 +114,9 @@ class Window(QtWidgets.QMainWindow):
 
     def file_open(self):
         name=QtWidgets.QFileDialog.getOpenFileName(self, 'Open File')
-        args, _ = initialize_quantities_given_datafile(main, filename=name[0])
+        args, self.window2 = initialize_quantities_given_datafile(main, filename=name[0])
         if args is not None:
+            self.filename = name[0]
             self.update_params_and_windows()
         else:
             self.statusBar().showMessage('/!\ UNRECOGNIZED /!\ Datafile : ')
