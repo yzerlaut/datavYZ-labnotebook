@@ -136,8 +136,9 @@ def get_linear_colormap(color1='blue', color2='red'):
                         'mycolors',[color1, color2])
 
 def put_list_of_figs_to_svg_fig(FIGS, CAP_SIZE=14,\
-                                fig_name="fig.svg", visualize=True,\
-                                transparent=True, correc_factor=70.):
+                                fig_name="fig.svg",\
+                                size_limit_for_svg=500000.,
+                                transparent=True, correc_factor=70., DPI=100.):
     """ take a list of figures and make a multi panel plot"""
     
     label = list(string.ascii_uppercase)[:len(FIGS)]
@@ -148,11 +149,19 @@ def put_list_of_figs_to_svg_fig(FIGS, CAP_SIZE=14,\
     width = np.max([s[0] for s in SIZE])
     height = np.max([s[1] for s in SIZE])
 
-    LABELS, XCOORD, YCOORD = [], [], []
-    # saving as svg
+    LABELS, XCOORD, YCOORD, SCALE = [], [], [], []
+        
     for i in range(len(FIGS)):
         ff = 'f.svg'
         FIGS[i].savefig('/tmp/'+str(i)+'.svg', format='svg', transparent=transparent)
+        SCALE.append(1.)
+        # if svg file too big we use the reduction to bitmap !!
+        if os.path.getsize('/tmp/'+str(i)+'.svg')>size_limit_for_svg:
+            print('fig'+str(i)+'.svg is of size:',os.path.getsize('/tmp/'+str(i)+'.svg'))
+            FIGS[i].savefig('/tmp/'+str(i)+'.png', format='png', dpi=DPI, transparent=True)
+            os.system('convert /tmp/'+str(i)+'.png /tmp/'+str(i)+'.svg')
+            print('fig'+str(i)+'.png is of size:',os.path.getsize('/tmp/'+str(i)+'.png'))
+            SCALE[i] = .71
         LABELS.append(label[i])
         XCOORD.append((i%3)*width*correc_factor)
         YCOORD.append(int(i/3)*height*correc_factor)
@@ -160,15 +169,13 @@ def put_list_of_figs_to_svg_fig(FIGS, CAP_SIZE=14,\
     PANELS = []
     for i in range(len(FIGS)):
         PANELS.append(sg.Panel(\
-            sg.SVG('/tmp/'+str(i)+'.svg').move(XCOORD[i],YCOORD[i]),\
-            sg.Text(LABELS[i], 25, 20, size=12, weight='bold').move(\
-                                                XCOORD[i],YCOORD[i]))\
+            sg.SVG('/tmp/'+str(i)+'.svg').move(XCOORD[i],YCOORD[i]).scale(SCALE[i]),\
+            sg.Text(LABELS[i], 25, 20, size=22, weight='bold').move(\
+                                                XCOORD[i]-15,YCOORD[i]))\
         )
     sg.Figure(str(.3*3.*width)+"cm", str(.3*height*int(len(FIGS)/3))+"cm",\
               *PANELS).save(fig_name)
 
-    if visualize:
-        _ = True
 
 
 
