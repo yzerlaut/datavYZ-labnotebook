@@ -2,7 +2,8 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from my_graph import set_plot
-from IO.fellin_lab import load_file as ABF_load
+from IO.axon_to_python import load_file as ABF_load
+from IO.elphy_to_python import get_analogsignals as DAT_load
 from electrophy_data import FocusMenu
 
 def plot_data(main):
@@ -13,8 +14,18 @@ def plot_data(main):
         FIG_LIST = []
         for i in plt.get_fignums():
             FIG_LIST.append(plt.figure(i))
-    if len(main.filename.split('.abf'))>1:
+    elif len(main.filename.split('.abf'))>1:
         t, v = ABF_load(main.filename, zoom=[main.args['x1'], main.args['x2']])
+        fig, ax = plt.subplots(1, figsize=(10,5))
+        plt.subplots_adjust(left=.1, bottom=.15)
+        ax.plot(t, v, 'k-')
+        set_plot(ax, xlabel='time (s)', ylabel='$V_m$ (mV)',\
+                 xlim=[main.args['x1'], main.args['x2']],\
+                 ylim=[main.args['y1'], main.args['y2']])
+        FIG_LIST = [fig]
+    elif len(main.filename.split('.DAT'))>1:
+        data = DAT_load(main.filename, zoom=[main.args['x1'], main.args['x2']])
+        t, v = data[0], data[1]
         fig, ax = plt.subplots(1, figsize=(10,5))
         plt.subplots_adjust(left=.1, bottom=.15)
         ax.plot(t, v, 'k-')
