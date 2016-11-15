@@ -9,7 +9,7 @@ from analyze_datafile import plot_data, initialize_quantities_given_datafile
 from IO.files_manip import get_files_with_given_ext
 from my_graph import put_list_of_figs_to_svg_fig
 
-def create_window(parent, FIG_LIST):
+def create_window(parent, FIG_LIST, with_toolbar=False):
 
     # # get all figures with their size !
     width, height = 0, 0
@@ -35,12 +35,15 @@ def create_window(parent, FIG_LIST):
     for ic in range(len(CANVAS)):
         layout.addWidget(CANVAS[ic], int(ic/3), ic%3)
         
-    # == # adding the matplotlib toolbar ?? 
-    # toolbar = NavigationToolbar(CANVAS[0], parent)
-    # layout.addWidget(toolbar)
+    # == # adding the matplotlib toolbar ??
+    if with_toolbar:
+        TOOLBARS = [NavigationToolbar(canva, parent) for canva in CANVAS]
     
     window.setLayout(layout)
-    return window
+    if with_toolbar:
+        return window, TOOLBARS
+    else:
+        return window
 
 def get_list_of_files(cdir="/tmp", extensions=['npz', 'abf']):
     FILES = []
@@ -56,9 +59,9 @@ class Window(QtWidgets.QMainWindow):
         
         self.setWindowIcon(QtGui.QIcon('logo.png'))
         self.setWindowTitle('.-* datavYZ *-.     Data vizualization software -')
-        self.setGeometry(50,50,800,60)
+        self.setGeometry(50, 50, 800, 60)
 
-        # buttons
+        # buttons and functions
         LABELS = ["q) Quit", "o) Open File", "f) Set Folder", "a) Analyze",\
                   "s) Save SVG", "Save as PNG", "p) Prev. File", "n) Next File"]
         FUNCTIONS = [self.close_app, self.file_open, self.folder_open, self.analyze,\
@@ -77,15 +80,14 @@ class Window(QtWidgets.QMainWindow):
             self.fileMenu.addAction(action)
 
         self.i_plot = 0
-        self.FIG_LIST, self.args = [], {}
+        self.FIG_LIST, self.args, self.window2 = [], {}, None
         try:
             self.filename, self.folder=np.load('__pycache__/last_datafile.npy')
-            self.args, self.window2 = initialize_quantities_given_datafile(self)
+            self.args = initialize_quantities_given_datafile(self)
         except FileNotFoundError:
             self.folder = '/tmp/' # TO be Changed for Cross-Platform implementation !!
             self.filename = self.folder+\
                 get_list_of_files(self.folder)[self.i_plot]
-            self.args = {}
             
         self.update_plot()    
         self.show()
@@ -99,12 +101,11 @@ class Window(QtWidgets.QMainWindow):
         self.window.show()
         self.statusBar().showMessage('DATA file : '+self.filename)
         self.activateWindow()
-        print(self.args)
         
     def update_params_and_windows(self):
         self.folder = os.path.split(self.filename)[0]+os.path.sep
         # if self.window2 is not None:
-        #     self.args, self.window2 = initialize_quantities_given_datafile(self)
+        #     initialize_quantities_given_datafile(self)
         #     self.window2.show()
         self.update_plot()
         
@@ -114,9 +115,10 @@ class Window(QtWidgets.QMainWindow):
 
     def file_open(self):
         name=QtWidgets.QFileDialog.getOpenFileName(self, 'Open File')
-        args, self.window2 = initialize_quantities_given_datafile(main, filename=name[0])
+        args = initialize_quantities_given_datafile(self, filename=name[0])
         if args is not None:
             self.filename = name[0]
+            self.args = args
             self.update_params_and_windows()
         else:
             self.statusBar().showMessage('/!\ UNRECOGNIZED /!\ Datafile : ')
