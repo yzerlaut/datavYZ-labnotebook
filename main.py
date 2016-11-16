@@ -57,7 +57,7 @@ class Window(QtWidgets.QMainWindow):
         
         super(Window, self).__init__(parent)
         
-        self.setWindowIcon(QtGui.QIcon('logo.png'))
+        self.setWindowIcon(QtGui.QIcon('graphs/logo.png'))
         self.setWindowTitle('.-* datavYZ *-.     Data vizualization software -')
         self.setGeometry(50, 50, 800, 60)
 
