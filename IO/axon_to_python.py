@@ -13,7 +13,7 @@ def load_file(filename, zoom=[0,np.inf]):
             zoom[1]=data.segments[-1].analogsignals[0].t_stop
         ### 
         ii = 0
-        while float(data.segments[ii].analogsignals[0].t_start)<=zoom[0]:
+        while (ii<len(data.segments)) and (float(data.segments[min(ii,len(data.segments)-1)].analogsignals[0].t_start)<=zoom[0]):
             ii+=1
         tt = np.array(data.segments[ii-1].analogsignals[0].times)
         cond = (tt>=zoom[0]) & (tt<=zoom[1])
@@ -21,7 +21,7 @@ def load_file(filename, zoom=[0,np.inf]):
         for j in range(1, len(data.segments[ii-1].analogsignals)+1):
             VEC.append(np.array(data.segments[ii-1].analogsignals[j-1])[cond])
         ### 
-        while ((float(data.segments[ii].analogsignals[0].t_start)<=zoom[1]) and (ii<len(data.segments))):
+        while (ii<len(data.segments)) and ((float(data.segments[min(ii,len(data.segments)-1)].analogsignals[0].t_start)<=zoom[1])):
             tt = np.array(data.segments[ii].analogsignals[0].times)
             cond = (tt>=zoom[0]) & (tt<=zoom[1])
             VEC[0] = np.concatenate([VEC[0],\

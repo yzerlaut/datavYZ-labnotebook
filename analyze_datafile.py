@@ -1,10 +1,9 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from my_graph import set_plot
 from IO.axon_to_python import load_file as ABF_load
 from IO.binary_to_python import load_file as BIN_load
-from electrophy_data import FocusMenu
+from graphs.interactive_view import FocusMenu
 
 def plot_data(main):
     plt.close('all')
@@ -59,6 +58,8 @@ def initialize_quantities_given_datafile(main, filename=None):
             exec("args['y"+str(i+1)+"_min']=VEC["+str(i)+"].min()-args['dy"+str(i+1)+"']/10.")
             exec("args['y"+str(i+1)+"_max']=VEC["+str(i)+"].max()+args['dy"+str(i+1)+"']/10.")
         main.window2 = FocusMenu(main)
+    elif (len(filename.split('.npz'))>1):
+        args = {}
     else:
         args, main.window2 = None, None
     return args
