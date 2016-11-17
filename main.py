@@ -6,8 +6,8 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from PyQt5 import QtGui, QtWidgets, QtCore
 import numpy as np
 from analyze_datafile import plot_data, initialize_quantities_given_datafile
-from IO.files_manip import get_files_with_given_ext
-from my_graph import put_list_of_figs_to_svg_fig
+from IO.files_manip import get_files_with_given_exts
+from graphs.my_graph import put_list_of_figs_to_svg_fig
 
 def create_window(parent, FIG_LIST, with_toolbar=False):
 
@@ -45,11 +45,8 @@ def create_window(parent, FIG_LIST, with_toolbar=False):
     else:
         return window
 
-def get_list_of_files(cdir="/tmp", extensions=['npz', 'abf']):
-    FILES = []
-    for ext in extensions:
-        FILES = FILES+get_files_with_given_ext(cdir, ext)
-    return FILES
+def get_list_of_files(cdir="/tmp"):
+    return get_files_with_given_exts(cdir)
         
 class Window(QtWidgets.QMainWindow):
     
@@ -62,8 +59,8 @@ class Window(QtWidgets.QMainWindow):
         self.setGeometry(50, 50, 800, 60)
 
         # buttons and functions
-        LABELS = ["q) Quit", "o) Open File", "f) Set Folder", "a) Analyze",\
-                  "s) Save SVG", "Save as PNG", "p) Prev. File", "n) Next File"]
+        LABELS = ["q) Quit", "o) Open File", "f) Set Folder", "Analyze",\
+                  "SVG export", "PNG export", "p) Prev. File", "n) Next File"]
         FUNCTIONS = [self.close_app, self.file_open, self.folder_open, self.analyze,\
                      self.save_as_svg, self.save_as_png, self.prev_plot, self.next_plot]
 
@@ -79,15 +76,17 @@ class Window(QtWidgets.QMainWindow):
             action.triggered.connect(func)
             self.fileMenu.addAction(action)
 
-        self.i_plot = 0
-        self.FIG_LIST, self.args, self.window2 = [], {}, None
+        self.i_plot, self.analysis_flag = 0, False
+        self.FIG_LIST, self.args, self.window2, self.params = [], {}, None, {}
         try:
-            self.filename, self.folder=np.load('__pycache__/last_datafile.npy')
+            self.filename, self.folder= np.load('program_data/last_datafile.npy')
+            self.FILE_LIST = get_list_of_files(self.folder)
+            self.i_plot = np.argwhere(self.FILE_LIST==self.filename)[0][0]
             self.args = initialize_quantities_given_datafile(self)
         except FileNotFoundError:
             self.folder = '/tmp/' # TO be Changed for Cross-Platform implementation !!
-            self.filename = self.folder+\
-                get_list_of_files(self.folder)[self.i_plot]
+            self.FILE_LIST = get_list_of_files(self.folder)
+            self.filename = self.FILE_LIST[self.i_plot]
             
         self.update_plot()    
         self.show()
@@ -103,10 +102,9 @@ class Window(QtWidgets.QMainWindow):
         self.activateWindow()
         
     def update_params_and_windows(self):
-        self.folder = os.path.split(self.filename)[0]+os.path.sep
-        # if self.window2 is not None:
-        #     initialize_quantities_given_datafile(self)
-        #     self.window2.show()
+        self.args = initialize_quantities_given_datafile(self)
+        if self.window2 is not None:
+            self.window2.show()
         self.update_plot()
         
     def close_app(self):
@@ -118,6 +116,11 @@ class Window(QtWidgets.QMainWindow):
         args = initialize_quantities_given_datafile(self, filename=name[0])
         if args is not None:
             self.filename = name[0]
+            self.folder = os.path.dirname(self.filename)
+            self.FILE_LIST = get_list_of_files(self.folder)
+            print(self.FILE_LIST)
+            print(np.argwhere(self.FILE_LIST==self.filename)[0][0])
+            self.i_plot = np.argwhere(self.FILE_LIST==self.filename)[0][0]
             self.args = args
             self.update_params_and_windows()
         else:
@@ -125,9 +128,10 @@ class Window(QtWidgets.QMainWindow):
 
     def folder_open(self):
         name=QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
-        self.folder = name+os.path.sep
-        self.filename = self.folder+\
-                get_list_of_files(self.folder)[self.i_plot]
+        self.folder = name
+        self.i_plot = 0
+        self.FILE_LIST = get_list_of_files(self.folder)
+        self.filename = self.FILE_LIST[self.i_plot]
         self.update_params_and_windows()
         
     def save_as_svg(self):
@@ -147,17 +151,15 @@ class Window(QtWidgets.QMainWindow):
     def prev_plot(self):
         self.i_plot -=1
         if self.i_plot>=0:
-            self.filename = self.folder+\
-                get_list_of_files(self.folder)[self.i_plot]
+            self.filename = self.FILE_LIST[self.i_plot]
             self.update_params_and_windows()
         else:
             self.statusBar().showMessage('Reached the Boudaries of the File List, i_plot='+str(self.i_plot+1)+'<1 !!')
             self.i_plot +=1
     def next_plot(self, ii):
         self.i_plot +=1
-        if (self.i_plot<len(get_list_of_files())):
-            self.filename = self.folder+\
-                get_list_of_files(self.folder)[self.i_plot]
+        if self.i_plot<len(self.FILE_LIST):
+            self.filename = self.FILE_LIST[self.i_plot]
             self.update_params_and_windows()
         else:
             self.statusBar().showMessage('Reached the Boudaries of the File List, i_plot='+str(self.i_plot+1)+'>'+str(len(get_list_of_files())))

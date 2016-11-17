@@ -21,16 +21,18 @@ def set_plot(ax, spines=['left', 'bottom'],\
     if xlim is None:
         xmin, xmax = ax.get_xaxis().get_view_interval()
         dx = xmax-xmin
-        ax.set_xlim([xmin-xlim_enhancment*dx/100.,xmax+xlim_enhancment*dx/100.])
+        xlim = [xmin-xlim_enhancment*dx/100.,xmax+xlim_enhancment*dx/100.]
+        ax.set_xlim(xlim)
     else:
         ax.set_xlim(xlim)
     if ylim is None:
         ymin, ymax = ax.get_yaxis().get_view_interval()
         dy = ymax-ymin
-        ax.set_ylim([ymin-ylim_enhancment*dy/100.,ymax+ylim_enhancment*dy/100.])
-    else:
-        ax.plot(xlim, ylim, 'w.', alpha=0.)
+        ylim = [ymin-ylim_enhancment*dy/100.,ymax+ylim_enhancment*dy/100.]
         ax.set_ylim(ylim)
+    else:
+        ax.set_ylim(ylim)
+    ax.plot(xlim, ylim, 'w.', alpha=0.)
 
     if (xticks is None) and ('bottom' or 'top' in spines):
         ax.xaxis.set_major_locator( MaxNLocator(nbins = num_xticks) )

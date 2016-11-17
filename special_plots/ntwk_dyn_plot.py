@@ -1,5 +1,6 @@
 import sys
-from . import my_graph
+sys.path.append('../')
+from graphs import my_graph
 import matplotlib.pylab as plt
 import numpy as np
 

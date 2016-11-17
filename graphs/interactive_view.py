@@ -20,20 +20,18 @@ class FocusMenu(QtWidgets.QDialog):
     def set_grid_and_actions(self):
         grid = QtWidgets.QGridLayout()
         self.setLayout(grid)
- 
-        FUNCS = [self.xzoom_in, self.xzoom_out, '', '',\
-                 self.yzoom_in, '', '', '',\
-                 self.yzoom_out, '', self.yshift_up, '',\
-                 '', self.xshift_left, self.yshift_bottom, self.xshift_right]
-        
-        names = ['(r) X-In', '(t) X-Out', '', '',
-                 '(d) Y-In', '', '', '',
-                 '(x) Y-Out', '', '(i) ^ ', '',
-                 '', '(j) <', '(k) v', '(l) >']
-        shortcuts = ['r', 't', '', '',
-                     'd', '', '', '',
-                     'x', '', 'i', '',
-                     '', 'j', 'k', 'l']
+        names = ['', '', '(i) ^ ', '',
+                 '', '(j) <', '(k) v', '(l) >',
+                 '', '', '', '',
+                 '(z) X-Out', '(x) Y-Out', '(c) Y-In ', '(v) X-In ']
+        shortcuts = ['', '', 'i', '',
+                     '', 'j', 'k', 'l',
+                     '', '', '', '',
+                     'z', 'x', 'c', 'v']
+        FUNCS = ['', '', self.yshift_up, '',\
+                 '', self.xshift_left, self.yshift_bottom, self.xshift_right,
+                 '', '', '', '',
+                 self.xzoom_out, self.yzoom_out, self.yzoom_in, self.xzoom_in]
         positions = [(i,j) for i in range(5) for j in range(4)]
 
         for position, name, func, shortcut in zip(positions, names, FUNCS, shortcuts):
@@ -76,18 +74,18 @@ class FocusMenu(QtWidgets.QDialog):
         self.parent.args['y1_max'] = self.parent.args['y1_min']+self.parent.args['dy1']
         self.parent.update_plot()
     def xshift_right(self):
-        self.parent.args['x1'] += self.parent.args['dx']/2.
-        self.parent.args['x2'] += self.parent.args['dx']/2.
+        self.parent.args['x1'] += self.parent.args['dx']/3.
+        self.parent.args['x2'] += self.parent.args['dx']/3.
         self.parent.update_plot()
     def xshift_left(self):
-        self.parent.args['x1'] -= self.parent.args['dx']/2.
-        self.parent.args['x2'] -= self.parent.args['dx']/2.
+        self.parent.args['x1'] -= self.parent.args['dx']/3.
+        self.parent.args['x2'] -= self.parent.args['dx']/3.
         self.parent.update_plot()
     def yshift_up(self):
-        self.parent.args['y1_min'] += self.parent.args['dy1']/2.
-        self.parent.args['y1_max'] += self.parent.args['dy1']/2.
+        self.parent.args['y1_min'] += self.parent.args['dy1']/3.
+        self.parent.args['y1_max'] += self.parent.args['dy1']/3.
         self.parent.update_plot()
     def yshift_bottom(self):
-        self.parent.args['y1_min'] -= self.parent.args['dy1']/2.
-        self.parent.args['y1_max'] -= self.parent.args['dy1']/2.
+        self.parent.args['y1_min'] -= self.parent.args['dy1']/3.
+        self.parent.args['y1_max'] -= self.parent.args['dy1']/3.
         self.parent.update_plot()

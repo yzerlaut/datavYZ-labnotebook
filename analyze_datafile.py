@@ -1,9 +1,10 @@
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from IO.axon_to_python import load_file as ABF_load
-from IO.binary_to_python import load_file as BIN_load
+from IO.binary_to_python import load_file as BIN_load, get_metadata
 from graphs.interactive_view import FocusMenu
+from graphs.my_graph import set_plot
+import opto_up_and_down_analysis.choose_analysis as choose_ud_analysis
 
 def plot_data(main):
     plt.close('all')
@@ -14,32 +15,31 @@ def plot_data(main):
         for i in plt.get_fignums():
             FIG_LIST.append(plt.figure(i))
     elif len(main.filename.split('.abf'))>1:
-        t, [v] = ABF_load(main.filename, zoom=[main.args['x1'], main.args['x2']])
-        fig, ax = plt.subplots(1, figsize=(10,5))
-        plt.subplots_adjust(left=.1, bottom=.15)
-        ax.plot(t, v, 'k-')
-        set_plot(ax, xlabel='time (s)', ylabel='$V_m$ (mV)',\
-                 xlim=[main.args['x1'], main.args['x2']],\
-                 ylim=[main.args['y1_min'], main.args['y1_max']])
-        FIG_LIST = [fig]
+        t, VEC = ABF_load(main.filename, zoom=[main.args['x1'], main.args['x2']])
+        FIG_LIST = [default_plot(t, VEC, main)]
     elif (len(main.filename.split('.bin'))>1):
+        main.params = get_metadata(main.filename)
+        func = choose_analysis(main) # function to analyze
         t, VEC = BIN_load(main.filename, zoom=[main.args['x1'], main.args['x2']])
-        fig = plt.figure(figsize=(10,4.+1.*(len(VEC)-1)))
-        plt.subplots_adjust(left=.1, bottom=.15, top=.97, right=.97)
-        ax = plt.subplot2grid((4, 1), (0, 0), rowspan=2)
-        ax.plot(t, VEC[0], 'k-')
-        set_plot(ax, xlabel='time (s)', ylabel='$V_m$ (mV)',\
-                 xlim=[main.args['x1'], main.args['x2']],\
-                 ylim=[main.args['y1_min'], main.args['y1_max']])
-        for i in range(1, 3):
-            ax = plt.subplot2grid((4, 1), (i+1, 0))
-            ax.plot(t, VEC[i], 'k-')
-            set_plot(ax, xlabel='time (s)', ylabel='$V_m$ (mV)',\
-                     xlim=[main.args['x1'], main.args['x2']],\
-                     ylim=[main.args['y'+str(i+1)+'_min'], main.args['y'+str(i+1)+'_max']])
-        FIG_LIST = [fig]
+        FIG_LIST = [func(t, VEC,  main)]
     return FIG_LIST
 
+def default_plot(t, VEC, main, xlabel='time (s)', ylabel='$V_m$ (mV)'):
+    fig, ax = plt.subplots(1, figsize=(10,5))
+    plt.subplots_adjust(left=.1, bottom=.15)
+    ax.plot(t, VEC[0], 'k-')
+    set_plot(ax, xlabel=xlabel, ylabel=ylabel,\
+             xlim=[main.args['x1'], main.args['x2']],\
+             ylim=[main.args['y1_min'], main.args['y1_max']])
+    return fig
+    
+def choose_analysis(main):
+    if main.params['main_protocol']=='RT-opto-Up-Down':
+        func = choose_ud_analysis(main)
+    if func is not None:
+        return func
+    else:
+        return default_plot
 
 def initialize_quantities_given_datafile(main, filename=None):
     if main.window2 is not None:
