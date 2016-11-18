@@ -21,7 +21,7 @@ in neurophysiological research.
 pip install pyqt5
 ```
 
-* [svgutils](https://pypi.python.org/pypi/svgutils), get it through:
+* [svgutils](https://svgutils.readthedocs.io/en/latest/), get it through:
 ```
 #!bash
 pip install svgutils
@@ -31,6 +31,8 @@ pip install svgutils
 #!bash
 pip install neo
 ```
+* [ImageMagick](https://www.imagemagick.org/script/index.php), get it by following the (platform-dependent) instructions on https://www.imagemagick.org/script/binary-releases.php
+
 * Clone the repository: 
 ```
 #!bash
