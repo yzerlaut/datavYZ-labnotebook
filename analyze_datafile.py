@@ -7,24 +7,34 @@ from graphs.my_graph import set_plot
 import opto_up_and_down_analysis.choose_analysis as choose_ud_analysis
 
 def plot_data(main):
+    ## CHOOSING THE ANALYSIS
     plt.close('all')
-    if len(main.filename.split('.npz'))>1: # analysis within the datafile ! just execute it !
+    if len(main.filename.split('.abf'))>1:
+        func = None
+    elif (len(main.filename.split('.bin'))>1):
+        main.params = get_metadata(main.filename)
+        func = choose_analysis(main) # function to analyze
+    else:
+        func=None
+    ## FINAL CHOICE
+    if len(main.filename.split('.npz'))>1:
+        # analysis within the datafile ! just execute it!
         data = np.load(main.filename)
         exec(str(data['plot']))
         FIG_LIST = []
         for i in plt.get_fignums():
             FIG_LIST.append(plt.figure(i))
-    elif len(main.filename.split('.abf'))>1:
-        t, VEC = ABF_load(main.filename, zoom=[main.args['x1'], main.args['x2']])
-        FIG_LIST = [default_plot(t, VEC, main)]
-    elif (len(main.filename.split('.bin'))>1):
-        main.params = get_metadata(main.filename)
-        func = choose_analysis(main) # function to analyze
-        t, VEC = BIN_load(main.filename, zoom=[main.args['x1'], main.args['x2']])
-        FIG_LIST = [func(t, VEC,  main)]
+    elif func is None:
+        FIG_LIST = [default_plot(main)]
+    else: # A GIVEN ANALYSIS WAS IMLEMENTED
+        FIG_LIST = func(main)
     return FIG_LIST
 
-def default_plot(t, VEC, main, xlabel='time (s)', ylabel='$V_m$ (mV)'):
+def default_plot(main, xlabel='time (s)', ylabel='$V_m$ (mV)'):
+    if len(main.filename.split('.abf'))>1:
+        t, VEC = ABF_load(main.filename, zoom=[main.args['x1'], main.args['x2']])
+    elif len(main.filename.split('.bin'))>1:
+        t, VEC = BIN_load(main.filename, zoom=[main.args['x1'], main.args['x2']])
     fig, ax = plt.subplots(1, figsize=(10,5))
     plt.subplots_adjust(left=.1, bottom=.15)
     ax.plot(t, VEC[0], 'k-')
@@ -34,12 +44,10 @@ def default_plot(t, VEC, main, xlabel='time (s)', ylabel='$V_m$ (mV)'):
     return fig
     
 def choose_analysis(main):
+    func = None
     if main.params['main_protocol']=='RT-opto-Up-Down':
-        func = choose_ud_analysis(main)
-    if func is not None:
-        return func
-    else:
-        return default_plot
+        func = choose_ud_analysis.func_for_analysis(main)
+    return func
 
 def initialize_quantities_given_datafile(main, filename=None):
     if main.window2 is not None:

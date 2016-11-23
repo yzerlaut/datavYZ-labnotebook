@@ -1,9 +1,13 @@
 from matplotlib.ticker import MaxNLocator
 import matplotlib as mpl
 import svgutils.compose as sg
+import svgutils.transform as sgt
 import os, string
 import numpy as np
 mpl.rcParams.update({'font.size': 14})
+import sys
+sys.path.append('../')
+from IO.files_manip import get_files_with_given_exts
 
 def set_plot(ax, spines=['left', 'bottom'],\
                 num_xticks=5, num_yticks=5,\
@@ -93,6 +97,10 @@ def set_subplot_safe_for_labels(fig, FIGSIZE=None, FONTSIZE=16,
                 top=max([1.-0.02*FONTSIZE/FIGSIZE[1],y0*1.1]),
                 hspace=hspace)
 
+def inch_to_cm(x):
+    inch = 2.54 # one inch is 2.54cm
+    return inch*x
+
 def cm2inch(*tupl):
     inch = 2.54
     if isinstance(tupl[0], tuple):
@@ -100,6 +108,7 @@ def cm2inch(*tupl):
     else:
         return tuple(i/inch for i in tupl)    
 
+    
 
 def build_bar_legend(X, ax, mymap, label='$\\nu$ (Hz)',\
                      bounds=None,ticks_labels=None,
@@ -137,7 +146,19 @@ def get_linear_colormap(color1='blue', color2='red'):
     return mpl.colors.LinearSegmentedColormap.from_list(\
                         'mycolors',[color1, color2])
 
-def put_list_of_figs_to_svg_fig(FIGS, CAP_SIZE=14,\
+def translate_to_bitmap_if_too_big(fig, svgfig,\
+                                   size_limit_for_svg=500000., DPI=100.):
+    if os.path.getsize(svgfig)>size_limit_for_svg:
+        print(svgfig+' is of size:',os.path.getsize(svgfig))
+        pngfig = svgfig.replace('.svg', '.png')
+        fig.savefig(pngfig, format='png', dpi=DPI, transparent=True)
+        os.system('convert '+pngfig+' '+svgfig)
+        print('NEW '+svgfig+' is of size:',os.path.getsize(svgfig))
+        return True
+    else:
+        return False
+    
+def make_multipanel_fig(FIGS, CAP_SIZE=14,\
                                 fig_name="fig.svg",\
                                 size_limit_for_svg=500000.,
                                 transparent=True, correc_factor=70., DPI=100.):
@@ -156,14 +177,10 @@ def put_list_of_figs_to_svg_fig(FIGS, CAP_SIZE=14,\
     for i in range(len(FIGS)):
         ff = 'f.svg'
         FIGS[i].savefig('/tmp/'+str(i)+'.svg', format='svg', transparent=transparent)
-        SCALE.append(1.)
-        # if svg file too big we use the reduction to bitmap !!
-        if os.path.getsize('/tmp/'+str(i)+'.svg')>size_limit_for_svg:
-            print('fig'+str(i)+'.svg is of size:',os.path.getsize('/tmp/'+str(i)+'.svg'))
-            FIGS[i].savefig('/tmp/'+str(i)+'.png', format='png', dpi=DPI, transparent=True)
-            os.system('convert /tmp/'+str(i)+'.png /tmp/'+str(i)+'.svg')
-            print('fig'+str(i)+'.png is of size:',os.path.getsize('/tmp/'+str(i)+'.png'))
-            SCALE[i] = .71
+        if translate_to_bitmap_if_too_big(FIGS[i], '/tmp/'+str(i)+'.svg'):
+            SCALE.append(.7)
+        else:
+            SCALE.append(1.)
         LABELS.append(label[i])
         XCOORD.append((i%3)*width*correc_factor)
         YCOORD.append(int(i/3)*height*correc_factor)
@@ -175,10 +192,7 @@ def put_list_of_figs_to_svg_fig(FIGS, CAP_SIZE=14,\
             sg.Text(LABELS[i], 25, 20, size=22, weight='bold').move(\
                                                 XCOORD[i]-15,YCOORD[i]))\
         )
-    sg.Figure(str(.3*3.*width)+"cm", str(.3*height*int(len(FIGS)/3))+"cm",\
+    sg.Figure(str((min(len(FIGS)%3,3))*inch_to_cm(width))+"cm",\
+              str(inch_to_cm(height)*(int(len(FIGS)/3.01)+1))+"cm",\
               *PANELS).save(fig_name)
 
-
-
-
-    

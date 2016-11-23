@@ -7,7 +7,8 @@ from PyQt5 import QtGui, QtWidgets, QtCore
 import numpy as np
 from analyze_datafile import plot_data, initialize_quantities_given_datafile
 from IO.files_manip import get_files_with_given_exts
-from graphs.my_graph import put_list_of_figs_to_svg_fig
+from graphs.my_graph import make_multipanel_fig
+from automated_analysis import analysis_window
 
 def create_window(parent, FIG_LIST, with_toolbar=False):
 
@@ -45,8 +46,8 @@ def create_window(parent, FIG_LIST, with_toolbar=False):
     else:
         return window
 
-def get_list_of_files(cdir="/tmp"):
-    return get_files_with_given_exts(cdir)
+def get_list_of_files(cdir="/tmp", return_last_folder=False):
+    return get_files_with_given_exts(cdir, return_last_folder=return_last_folder)
         
 class Window(QtWidgets.QMainWindow):
     
@@ -54,44 +55,70 @@ class Window(QtWidgets.QMainWindow):
         
         super(Window, self).__init__(parent)
         
-        self.setWindowIcon(QtGui.QIcon('graphs/logo.png'))
-        self.setWindowTitle('.-* datavYZ *-.     Data vizualization software -')
-        self.setGeometry(50, 50, 800, 60)
-
         # buttons and functions
-        LABELS = ["q) Quit", "o) Open File", "f) Set Folder", "Analyze",\
-                  "SVG export", "PNG export", "p) Prev. File", "n) Next File"]
+        LABELS = ["q) Quit", "o) Open File", "f) Set Folder", "a) Analyze",\
+                  "SVG export", "s) save as PNG", "p) Prev. File", "n) Next File"]
         FUNCTIONS = [self.close_app, self.file_open, self.folder_open, self.analyze,\
                      self.save_as_svg, self.save_as_png, self.prev_plot, self.next_plot]
+        button_length = 113.
+        self.setWindowIcon(QtGui.QIcon('graphs/logo.png'))
+        self.setWindowTitle('.-* datavYZ *-.   Data analysis and vizualization software -')
+        self.setGeometry(50, 50, button_length*(1+len(LABELS)), 60)
+
 
         mainMenu = self.menuBar()
         self.fileMenu = mainMenu.addMenu('&File')
         
-        for func, label, shift in zip(FUNCTIONS, LABELS, 98*np.arange(len(LABELS))):
+        for func, label, shift in zip(FUNCTIONS, LABELS,\
+                                      button_length*np.arange(len(LABELS))):
             btn = QtWidgets.QPushButton(label, self)
             btn.clicked.connect(func)
+            btn.setMinimumWidth(button_length)
             btn.move(shift, 0)
             action = QtWidgets.QAction(label, self)
             action.setShortcut(label.split(')')[0])
             action.triggered.connect(func)
             self.fileMenu.addAction(action)
-
+        self.btn = QtWidgets.QCheckBox("    output \n on Desktop", self)
+        self.btn.move(shift+button_length, 0)
+        self.btn.stateChanged.connect(self.set_analysis_folder)
+        self.btn.setChecked(True)
+            
         self.i_plot, self.analysis_flag = 0, False
+        self.FolderAnalysisMenu =  None
         self.FIG_LIST, self.args, self.window2, self.params = [], {}, None, {}
+        self.analysis_flag = False
         try:
-            self.filename, self.folder= np.load('program_data/last_datafile.npy')
+            self.filename,self.folder,btn_state = np.load('program_data/last_datafile.npy')
+            if btn_state=='False': self.btn.setChecked(False)
             self.FILE_LIST = get_list_of_files(self.folder)
             self.i_plot = np.argwhere(self.FILE_LIST==self.filename)[0][0]
             self.args = initialize_quantities_given_datafile(self)
-        except FileNotFoundError:
+            self.update_plot()    
+        except FileNotFoundError and ValueError and IndexError:
+            # self.filename, self.folder = '', ''
+            # self.statusBar().showMessage('Provide a datafile of a folder for analysis ')
             self.folder = '/tmp/' # TO be Changed for Cross-Platform implementation !!
             self.FILE_LIST = get_list_of_files(self.folder)
             self.filename = self.FILE_LIST[self.i_plot]
+            self.update_plot()    
             
-        self.update_plot()    
         self.show()
- 
+
+    def set_analysis_folder(self):
+        if self.btn.isChecked():
+            self.analysis_folder = os.path.join(os.path.expanduser("~"),'Desktop')
+        else:
+            self.analysis_folder = os.path.join(self.folder,'analysis')
+        if not os.path.exists(self.analysis_folder):
+            os.makedirs(self.analysis_folder)
+        print(self.analysis_folder)
+            
     def analyze(self):
+        self.analysis_flag = True
+        self.statusBar().showMessage('Analyzing data [...]')
+        self.update_plot()    
+        self.analysis_flag = False
         return 0
     
     def update_plot(self):
@@ -108,45 +135,67 @@ class Window(QtWidgets.QMainWindow):
         self.update_plot()
         
     def close_app(self):
-        np.save('__pycache__/last_datafile.npy', [self.filename, self.folder])
+        if self.filename!='':
+            np.save('program_data/last_datafile.npy', [self.filename, self.folder, self.btn.isChecked()])
         sys.exit()
 
     def file_open(self):
-        name=QtWidgets.QFileDialog.getOpenFileName(self, 'Open File')
-        args = initialize_quantities_given_datafile(self, filename=name[0])
-        if args is not None:
+        name=QtWidgets.QFileDialog.getOpenFileName(self, 'Open File',\
+                                                   self.folder)
+        if self.FolderAnalysisMenu is not None:
+            self.FolderAnalysisMenu.close()
+        try:
+            args = initialize_quantities_given_datafile(self, filename=name[0])
             self.filename = name[0]
             self.folder = os.path.dirname(self.filename)
+            self.set_analysis_folder()
             self.FILE_LIST = get_list_of_files(self.folder)
-            print(self.FILE_LIST)
-            print(np.argwhere(self.FILE_LIST==self.filename)[0][0])
             self.i_plot = np.argwhere(self.FILE_LIST==self.filename)[0][0]
             self.args = args
             self.update_params_and_windows()
-        else:
-            self.statusBar().showMessage('/!\ UNRECOGNIZED /!\ Datafile : ')
+        except IndexError and FileNotFoundError:
+            self.statusBar().showMessage('/!\ No datafile found... ')
 
     def folder_open(self):
-        name=QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder')
+        name=QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder', self.folder)
         self.folder = name
-        self.i_plot = 0
-        self.FILE_LIST = get_list_of_files(self.folder)
-        self.filename = self.FILE_LIST[self.i_plot]
-        self.update_params_and_windows()
+        try:
+            self.FolderAnalysisMenu =  analysis_window.FolderAnalysisMenu(self)
+            self.set_analysis_folder()
+            self.i_plot = 0
+            self.FILE_LIST = get_list_of_files(self.folder)
+            self.filename = self.FILE_LIST[self.i_plot]
+            self.update_params_and_windows()
+        except IndexError or FileNotFoundError:
+            self.statusBar().showMessage('/!\ No datafile found... ')
+            
         
     def save_as_svg(self):
-        put_list_of_figs_to_svg_fig(self.FIG_LIST,\
-                    fig_name='/Users/yzerlaut/Desktop/fig.svg')
+        i=1
+        while os.path.isfile(os.path.join(self.analysis_folder,'fig'+str(i)+'.svg')) or os.path.isfile(os.path.join(self.analysis_folder,'fig'+str(i)+'_bitmap.svg')):
+            i+=1
+        # multipanel figure
+        make_multipanel_fig(self.FIG_LIST,\
+                fig_name=os.path.join(self.analysis_folder,'fig'+str(i)+'.svg'))
         self.statusBar().showMessage(\
-                'Figure saved as : /Users/yzerlaut/Desktop/fig.svg')
-
+                'Figure saved as : '+os.path.join(self.analysis_folder,'fig'+str(i)+'.svg'))
     def save_as_png(self):
-        i=0
+        if len(self.folder.split('DATA'))>1:
+            _, PREFIX_FOLDER = get_list_of_files(self.folder, return_last_folder=True)
+            figname=PREFIX_FOLDER[self.i_plot]
+        else:
+            figname='fig'
+        i=1
+        while os.path.isfile(os.path.join(self.analysis_folder, figname+str(i)+'.png')):
+            i+=1
         for ii in range(len(self.FIG_LIST)):
+            if len(self.FIG_LIST)<2:
+                self.FIG_LIST[ii].suptitle(figname)
             self.FIG_LIST[ii].savefig(\
-                    '/Users/yzerlaut/Desktop/fig'+str(ii)+'.png')
+                    os.path.join(self.analysis_folder,figname+str(i+ii)+'.png'))
         self.statusBar().showMessage(\
-                'Figures saved as : ~/Desktop/figXX.png')
+                'Figures saved as : '+\
+                    os.path.join(self.analysis_folder,figname+str(i+ii)+'.png'))
         
     def prev_plot(self):
         self.i_plot -=1
@@ -164,6 +213,7 @@ class Window(QtWidgets.QMainWindow):
         else:
             self.statusBar().showMessage('Reached the Boudaries of the File List, i_plot='+str(self.i_plot+1)+'>'+str(len(get_list_of_files())))
             self.i_plot -=1
+
 
 if __name__ == '__main__':
     import time
