@@ -124,7 +124,10 @@ class Window(QtWidgets.QMainWindow):
     
     def update_plot(self):
         self.FIG_LIST = plot_data(self)
-        self.window = create_window(self, self.FIG_LIST)
+        if self.analysis_flag:
+            self.window = create_window(self, self.FIG_LIST)
+        else:
+            self.window, TOOLBARS = create_window(self, self.FIG_LIST, with_toolbar)
         self.window.show()
         self.statusBar().showMessage('DATA file : '+self.filename)
         self.activateWindow()
