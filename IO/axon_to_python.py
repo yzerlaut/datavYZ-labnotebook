@@ -35,3 +35,5 @@ def load_file(filename, zoom=[0,np.inf]):
         print('File not Found !')
         return [[], []]
     
+def get_metadata(filename):
+    return {'main_protocol':'spont-act-sampling', 'clamp_index':1}

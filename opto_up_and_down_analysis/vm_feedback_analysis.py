@@ -66,11 +66,11 @@ def fig_with_sample_traces(t_window, TEST_TRACES, CTRL_TRACES, delay, duration,\
     for v in CTRL_TRACES[:N]:
         ax.plot(t_window, v, 'k', lw=.5)
     ax.plot(t_window, CTRL_TRACES[-1], 'k',\
-            label='blank trials \n (10 samples)', lw=.5)
+            label='blank trials', lw=.5)
     for v in TEST_TRACES[:N]:
         plt.plot(t_window, v, color, lw=.5)
     ax.plot(t_window, TEST_TRACES[-1], color,\
-            label='test trials \n (10 samples)', lw=.5)
+            label='test trials', lw=.5)
     ax.legend(prop={'size':'x-small'}, loc='best', frameon=False)
     set_plot(ax, ylabel='$V_m$ (mV)', xlabel='delay from state onset (ms)')
     ax.fill_between([delay, delay+duration],\

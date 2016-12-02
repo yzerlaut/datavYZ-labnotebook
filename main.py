@@ -5,7 +5,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from PyQt5 import QtGui, QtWidgets, QtCore
 import numpy as np
-from analyze_datafile import plot_data, initialize_quantities_given_datafile
+from analyze_datafile import plot_data, initialize_quantities_given_datafile, save_as_npz
 from IO.files_manip import get_files_with_given_exts, rename_files_for_easy_sorting
 from graphs.my_graph import make_multipanel_fig
 from automated_analysis import analysis_window
@@ -22,7 +22,7 @@ def create_window(parent, FIG_LIST, with_toolbar=False):
     
     # Window size choosen appropriately
     window = QtWidgets.QDialog()
-    window.setGeometry(100,150, width, height)
+    window.setGeometry(100, 150, width, height)
     
     # this is the Canvas Widget that displays the `figure`
     # it takes the `figure` instance as a parameter to __init__
@@ -30,21 +30,22 @@ def create_window(parent, FIG_LIST, with_toolbar=False):
     for fig in FIG_LIST:
         CANVAS.append(FigureCanvas(fig))
 
-    # this is the Navigation widget
-    # it takes the Canvas widget and a parent
     layout = QtWidgets.QGridLayout(window)
     for ic in range(len(CANVAS)):
         layout.addWidget(CANVAS[ic], int(ic/3), ic%3)
         
-    # == # adding the matplotlib toolbar ??
-    if with_toolbar:
-        TOOLBARS = [NavigationToolbar(canva, parent) for canva in CANVAS]
-    
     window.setLayout(layout)
+            
     if with_toolbar:
-        return window, TOOLBARS
+        window2 = QtWidgets.QDialog()
+        window2.setGeometry(width+320, 320, 70, height/3.)
+        layout2 = QtWidgets.QGridLayout(window2)
+        for ic in range(len(CANVAS)):
+            # this is the Navigation widget, it takes the Canvas widget and a parent
+            layout2.addWidget(NavigationToolbar(CANVAS[ic], parent), ic, 0)
     else:
-        return window
+        window2 = None
+    return window, window2
 
 def get_list_of_files(cdir="/tmp"):
     return get_files_with_given_exts(cdir)
@@ -57,9 +58,9 @@ class Window(QtWidgets.QMainWindow):
         
         # buttons and functions
         LABELS = ["q) Quit", "o) Open File", "f) Set Folder", "a) Analyze",\
-                  "SVG export", "s) save as PNG", "p) Prev. File", "n) Next File"]
+                  "SVG export", "s) save as PNG", "d) save as .npz", "p) Prev. File", "n) Next File"]
         FUNCTIONS = [self.close_app, self.file_open, self.folder_open, self.analyze,\
-                     self.save_as_svg, self.save_as_png, self.prev_plot, self.next_plot]
+                     self.save_as_svg, self.save_as_png, self.save_as_data, self.prev_plot, self.next_plot]
         button_length = 113.
         self.setWindowIcon(QtGui.QIcon('graphs/logo.png'))
         self.setWindowTitle('.-* datavYZ *-.   Data analysis and vizualization software -')
@@ -85,7 +86,7 @@ class Window(QtWidgets.QMainWindow):
             
         self.i_plot, self.analysis_flag = 0, False
         self.FolderAnalysisMenu =  None
-        self.FIG_LIST, self.args, self.window2, self.params = [], {}, None, {}
+        self.FIG_LIST, self.args, self.window2, self.window3, self.params = [], {}, None, None, {}
         self.analysis_flag = False
         try:
             self.filename,self.folder,btn_state = np.load('program_data/last_datafile.npy')
@@ -123,19 +124,18 @@ class Window(QtWidgets.QMainWindow):
         return 0
     
     def update_plot(self):
-        self.FIG_LIST = plot_data(self)
-        if self.analysis_flag:
-            self.window = create_window(self, self.FIG_LIST)
-        else:
-            self.window, TOOLBARS = create_window(self, self.FIG_LIST, with_toolbar)
+        try:
+            self.FIG_LIST = plot_data(self)
+        except ValueError: self.statusBar().showMessage('PROBLEM with datafile : '+self.filename+', Check It Manually !!')
+        self.window, self.window3 = create_window(self, self.FIG_LIST, with_toolbar=self.analysis_flag)
         self.window.show()
+        if self.window3 is not None:
+            self.window3.show()
         self.statusBar().showMessage('DATA file : '+self.filename)
         self.activateWindow()
         
     def update_params_and_windows(self):
         self.args = initialize_quantities_given_datafile(self)
-        if self.window2 is not None:
-            self.window2.show()
         self.update_plot()
         
     def close_app(self):
@@ -158,7 +158,7 @@ class Window(QtWidgets.QMainWindow):
             self.i_plot = np.argwhere(self.FILE_LIST==self.filename)[0][0]
             self.args = args
             self.update_params_and_windows()
-        except (IndexError, FileNotFoundError):
+        except (IndexError, FileNotFoundError, NoneType):
             self.statusBar().showMessage('/!\ No datafile found... ')
 
     def folder_open(self):
@@ -174,7 +174,7 @@ class Window(QtWidgets.QMainWindow):
             self.FILE_LIST = get_list_of_files(self.folder)
             self.filename = self.FILE_LIST[self.i_plot]
             self.update_params_and_windows()
-        except (IndexError, FileNotFoundError):
+        except (IndexError, FileNotFoundError, NoneType):
             self.statusBar().showMessage('/!\ No datafile found... ')
             
         
@@ -202,6 +202,13 @@ class Window(QtWidgets.QMainWindow):
                 'Figures saved as : '+\
                     os.path.join(self.analysis_folder,figname+str(i+ii)+'.png'))
         
+    def save_as_data(self):
+        i=1
+        while os.path.isfile(os.path.join(self.analysis_folder, 'data'+str(i)+'.npz')):
+            i+=1
+        save_as_npz(self, os.path.join(self.analysis_folder, 'data'+str(i)+'.npz'))
+        self.statusBar().showMessage('Saving as : '+os.path.join(self.analysis_folder, 'data'+str(i)+'.npz'))
+    
     def prev_plot(self):
         self.i_plot -=1
         self.analysis_flag = False
