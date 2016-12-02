@@ -6,7 +6,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from PyQt5 import QtGui, QtWidgets, QtCore
 import numpy as np
 from analyze_datafile import plot_data, initialize_quantities_given_datafile
-from IO.files_manip import get_files_with_given_exts
+from IO.files_manip import get_files_with_given_exts, rename_files_for_easy_sorting
 from graphs.my_graph import make_multipanel_fig
 from automated_analysis import analysis_window
 
@@ -46,8 +46,8 @@ def create_window(parent, FIG_LIST, with_toolbar=False):
     else:
         return window
 
-def get_list_of_files(cdir="/tmp", return_last_folder=False):
-    return get_files_with_given_exts(cdir, return_last_folder=return_last_folder)
+def get_list_of_files(cdir="/tmp"):
+    return get_files_with_given_exts(cdir)
         
 class Window(QtWidgets.QMainWindow):
     
@@ -64,7 +64,6 @@ class Window(QtWidgets.QMainWindow):
         self.setWindowIcon(QtGui.QIcon('graphs/logo.png'))
         self.setWindowTitle('.-* datavYZ *-.   Data analysis and vizualization software -')
         self.setGeometry(50, 50, button_length*(1+len(LABELS)), 60)
-
 
         mainMenu = self.menuBar()
         self.fileMenu = mainMenu.addMenu('&File')
@@ -95,7 +94,7 @@ class Window(QtWidgets.QMainWindow):
             self.i_plot = np.argwhere(self.FILE_LIST==self.filename)[0][0]
             self.args = initialize_quantities_given_datafile(self)
             self.update_plot()    
-        except FileNotFoundError and ValueError and IndexError:
+        except (FileNotFoundError, ValueError, IndexError):
             # self.filename, self.folder = '', ''
             # self.statusBar().showMessage('Provide a datafile of a folder for analysis ')
             self.folder = '/tmp/' # TO be Changed for Cross-Platform implementation !!
@@ -108,17 +107,19 @@ class Window(QtWidgets.QMainWindow):
     def set_analysis_folder(self):
         if self.btn.isChecked():
             self.analysis_folder = os.path.join(os.path.expanduser("~"),'Desktop')
+            try: self.FolderAnalysisMenu.hide()
+            except AttributeError: pass
         else:
             self.analysis_folder = os.path.join(self.folder,'analysis')
+            self.FolderAnalysisMenu =  analysis_window.FolderAnalysisMenu(self)
         if not os.path.exists(self.analysis_folder):
             os.makedirs(self.analysis_folder)
-        print(self.analysis_folder)
+        print('analysis folder for now: ', self.analysis_folder)
             
     def analyze(self):
         self.analysis_flag = True
         self.statusBar().showMessage('Analyzing data [...]')
         self.update_plot()    
-        self.analysis_flag = False
         return 0
     
     def update_plot(self):
@@ -142,6 +143,7 @@ class Window(QtWidgets.QMainWindow):
     def file_open(self):
         name=QtWidgets.QFileDialog.getOpenFileName(self, 'Open File',\
                                                    self.folder)
+        self.analysis_flag = False
         if self.FolderAnalysisMenu is not None:
             self.FolderAnalysisMenu.close()
         try:
@@ -153,20 +155,23 @@ class Window(QtWidgets.QMainWindow):
             self.i_plot = np.argwhere(self.FILE_LIST==self.filename)[0][0]
             self.args = args
             self.update_params_and_windows()
-        except IndexError and FileNotFoundError:
+        except (IndexError, FileNotFoundError):
             self.statusBar().showMessage('/!\ No datafile found... ')
 
     def folder_open(self):
         name=QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder', self.folder)
-        self.folder = name
+        if name!='':
+            self.folder = name
+        self.analysis_flag = False
+        rename_files_for_easy_sorting(dir=self.folder)
         try:
-            self.FolderAnalysisMenu =  analysis_window.FolderAnalysisMenu(self)
+            # we first rename the files (add 0, so that '23_01_13' instead of '23_1_13')
             self.set_analysis_folder()
             self.i_plot = 0
             self.FILE_LIST = get_list_of_files(self.folder)
             self.filename = self.FILE_LIST[self.i_plot]
             self.update_params_and_windows()
-        except IndexError or FileNotFoundError:
+        except (IndexError, FileNotFoundError):
             self.statusBar().showMessage('/!\ No datafile found... ')
             
         
@@ -179,17 +184,14 @@ class Window(QtWidgets.QMainWindow):
                 fig_name=os.path.join(self.analysis_folder,'fig'+str(i)+'.svg'))
         self.statusBar().showMessage(\
                 'Figure saved as : '+os.path.join(self.analysis_folder,'fig'+str(i)+'.svg'))
+        
     def save_as_png(self):
-        if len(self.folder.split('DATA'))>1:
-            _, PREFIX_FOLDER = get_list_of_files(self.folder, return_last_folder=True)
-            figname=PREFIX_FOLDER[self.i_plot]
-        else:
-            figname='fig'
+        figname=os.path.basename(get_list_of_files(self.folder)[self.i_plot]).split('.')[0]
         i=1
         while os.path.isfile(os.path.join(self.analysis_folder, figname+str(i)+'.png')):
             i+=1
         for ii in range(len(self.FIG_LIST)):
-            if len(self.FIG_LIST)<2:
+            if not self.analysis_flag:
                 self.FIG_LIST[ii].suptitle(figname)
             self.FIG_LIST[ii].savefig(\
                     os.path.join(self.analysis_folder,figname+str(i+ii)+'.png'))
@@ -199,19 +201,21 @@ class Window(QtWidgets.QMainWindow):
         
     def prev_plot(self):
         self.i_plot -=1
+        self.analysis_flag = False
         if self.i_plot>=0:
             self.filename = self.FILE_LIST[self.i_plot]
             self.update_params_and_windows()
         else:
-            self.statusBar().showMessage('Reached the Boudaries of the File List, i_plot='+str(self.i_plot+1)+'<1 !!')
+            self.statusBar().showMessage('Reached the Boudaries of the File List, i_plot='+str(self.i_plot)+'<1 !!')
             self.i_plot +=1
     def next_plot(self, ii):
         self.i_plot +=1
+        self.analysis_flag = False
         if self.i_plot<len(self.FILE_LIST):
             self.filename = self.FILE_LIST[self.i_plot]
             self.update_params_and_windows()
         else:
-            self.statusBar().showMessage('Reached the Boudaries of the File List, i_plot='+str(self.i_plot+1)+'>'+str(len(get_list_of_files())))
+            self.statusBar().showMessage('Reached the Boudaries of the File List, i_plot='+str(self.i_plot)+'>'+str(len(get_list_of_files())))
             self.i_plot -=1
 
 

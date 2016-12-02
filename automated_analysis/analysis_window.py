@@ -87,7 +87,7 @@ class FolderAnalysisMenu(QtWidgets.QDialog):
         self.parent = parent
         self.setWindowIcon(QtGui.QIcon('logo.png'))
         self.setWindowTitle('Folder Analysis')
-        self.setGeometry(100,600,170,100)
+        self.setGeometry(920,400,200,70)
 
         # buttons and functions
         LABELS = ["Merge Figures on PDF", "** -- View Pdf -- **"]
