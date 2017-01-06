@@ -1,5 +1,5 @@
 import numpy as np
-import json
+import json, os
 
 def load_file(filename, zoom=[0,np.inf]):
 
@@ -7,7 +7,12 @@ def load_file(filename, zoom=[0,np.inf]):
     nChannels = int(P['ChannelCount'])
     nEpisode = int(P['EpCount'])
     dt = 1e-3/float(P['f_acq'])
-    
+
+    if zoom[0]<0:
+        tend = dt*int(os.path.getsize(filename)/nChannels/nEpisode/np.dtype(np.float32).itemsize)
+        print(tend)
+        zoom[0] = tend+zoom[0]
+        
     # loading the data file
     try:
         data = np.fromfile(filename, dtype=np.float32)
@@ -36,7 +41,8 @@ if __name__ == '__main__':
     import matplotlib.pylab as plt
     filename = sys.argv[-1]
     print(get_metadata(filename))
-    t, data = load_file(filename, zoom=[0,2.3])
-    for i in range(10):
-        plt.plot(t, data[0][i])
+    t, data = load_file(filename, zoom=[-5.,np.inf])
+    # for i in range(10):
+    #     plt.plot(t, data[0][i])
+    plt.plot(t, data[0])
     plt.show()

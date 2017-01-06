@@ -96,12 +96,12 @@ class Window(QtWidgets.QMainWindow):
             self.args = initialize_quantities_given_datafile(self)
             self.update_plot()    
         except (FileNotFoundError, ValueError, IndexError):
-            # self.filename, self.folder = '', ''
-            # self.statusBar().showMessage('Provide a datafile of a folder for analysis ')
-            self.folder = '/tmp/' # TO be Changed for Cross-Platform implementation !!
-            self.FILE_LIST = get_list_of_files(self.folder)
-            self.filename = self.FILE_LIST[self.i_plot]
-            self.update_plot()    
+            self.filename, self.folder = '', ''
+            self.statusBar().showMessage('Provide a datafile of a folder for analysis ')
+            # self.folder = '/tmp/' # TO be Changed for Cross-Platform implementation !!
+            # self.FILE_LIST = get_list_of_files(self.folder)
+            # self.filename = self.FILE_LIST[self.i_plot]
+            # self.update_plot()    
             
         self.show()
 
@@ -165,16 +165,18 @@ class Window(QtWidgets.QMainWindow):
         name=QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder', self.folder)
         if name!='':
             self.folder = name
+        else:
+            self.folder = os.path.sep+'tmp'
         self.analysis_flag = False
-        rename_files_for_easy_sorting(dir=self.folder)
         try:
+            rename_files_for_easy_sorting(dir=self.folder)
             # we first rename the files (add 0, so that '23_01_13' instead of '23_1_13')
             self.set_analysis_folder()
             self.i_plot = 0
             self.FILE_LIST = get_list_of_files(self.folder)
             self.filename = self.FILE_LIST[self.i_plot]
             self.update_params_and_windows()
-        except (IndexError, FileNotFoundError, NoneType):
+        except (IndexError, FileNotFoundError, NoneType, OSError):
             self.statusBar().showMessage('/!\ No datafile found... ')
             
         

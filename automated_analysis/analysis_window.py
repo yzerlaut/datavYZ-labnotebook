@@ -5,36 +5,38 @@ import sys, os
 sys.path.append('../')
 import IO
 
-def pngs_to_one_pdf_page(images, RESOLUTION=300, N=8):
+def pngs_to_one_pdf_page(images, RESOLUTION=300, N=10):
     """
     images is a list of strings ['file1.png', 'files2.png', ...]
-    is has to be of size 8 maximum !!! (to fit on a pdf page)
+    is has to be of size N maximum !!! (to fit on a pdf page)
     this function creates a file called 'page.pdf'
     --------------- options 
     RESOLUTION =300 Dot Per Inches
     figure_proportion = 5./7. height over width, set in matplotlib.figure.figsize
     """
     if len(images)>N:
-        print("Error, images should be of size "+str(N)+"8 maximum")
+        print("Error, images should be of size "+str(N)+" maximum")
     # A4 at resolution
     width, height = int(8.27 *RESOLUTION), int(11.7 *RESOLUTION) 
     # IMAGESIZE = int(4.5*figure_proportion*RESOLUTION), int(4.5*RESOLUTION)
-    fig_width = 3.5
-    fig_height = 2.2
+    fig_width = 3.
+    fig_height = 2.2*4./5.
     IMAGESIZE0 = int(fig_width*RESOLUTION), int(fig_height*RESOLUTION)
     x0 = 0.5
-    x1 = x0+fig_width+.1
+    x1 = x0+fig_width+.3
     y0 = .8
-    y1, y2, y3 = y0+fig_height+.2,y0+2*fig_height+2*.2, y0+3*fig_height+3*.2
+    y1, y2, y3, y4 = y0+fig_height+.2,y0+2*fig_height+2*.2, y0+3*fig_height+3*.2, y0+4*fig_height+4*.2
     coords = [\
               [int(x0*RESOLUTION), int(y0*RESOLUTION)],
               [int(x0*RESOLUTION), int(y1*RESOLUTION)],
               [int(x0*RESOLUTION), int(y2*RESOLUTION)],
               [int(x0*RESOLUTION), int(y3*RESOLUTION)],
+              [int(x0*RESOLUTION), int(y4*RESOLUTION)],
               [int(x1*RESOLUTION), int(y0*RESOLUTION)],
               [int(x1*RESOLUTION), int(y1*RESOLUTION)],
               [int(x1*RESOLUTION), int(y2*RESOLUTION)],
-              [int(x1*RESOLUTION), int(y3*RESOLUTION)]]
+              [int(x1*RESOLUTION), int(y3*RESOLUTION)],
+              [int(x1*RESOLUTION), int(y4*RESOLUTION)]]
     page = Image.new('RGB', (width, height), 'white')
     for i in range(len(images)):
         # im = Image.open(images[i]).rotate(90)
@@ -49,7 +51,7 @@ def pngs_to_one_pdf_page(images, RESOLUTION=300, N=8):
         page.paste(im, box=(coords[i][0],coords[i][1]))
     page.save('page.pdf')
     
-def loop_over_pngs_and_generate_pdf(folder, N=8):
+def loop_over_pngs_and_generate_pdf(folder, N=10):
     """
     loop over all the png files in a folder and create a multipages
     pdf that plot them 12 by 12 !!

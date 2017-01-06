@@ -147,7 +147,7 @@ def get_linear_colormap(color1='blue', color2='red'):
                         'mycolors',[color1, color2])
 
 def translate_to_bitmap_if_too_big(fig, svgfig,\
-                                   size_limit_for_svg=500000., DPI=100.):
+                                   size_limit_for_svg=np.inf, DPI=100.):
     if os.path.getsize(svgfig)>size_limit_for_svg:
         print(svgfig+' is of size:',os.path.getsize(svgfig))
         pngfig = svgfig.replace('.svg', '.png')
@@ -160,7 +160,6 @@ def translate_to_bitmap_if_too_big(fig, svgfig,\
     
 def make_multipanel_fig(FIGS, CAP_SIZE=14,\
                                 fig_name="fig.svg",\
-                                size_limit_for_svg=500000.,
                                 transparent=True, correc_factor=70., DPI=100.):
     """ take a list of figures and make a multi panel plot"""
     
