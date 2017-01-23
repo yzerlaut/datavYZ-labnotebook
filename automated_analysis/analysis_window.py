@@ -22,7 +22,7 @@ def pngs_to_one_pdf_page(images, RESOLUTION=300, N=10):
     fig_width = 3.
     fig_height = 2.2*4./5.
     IMAGESIZE0 = int(fig_width*RESOLUTION), int(fig_height*RESOLUTION)
-    x0 = 0.5
+    x0 = 1.
     x1 = x0+fig_width+.3
     y0 = .8
     y1, y2, y3, y4 = y0+fig_height+.2,y0+2*fig_height+2*.2, y0+3*fig_height+3*.2, y0+4*fig_height+4*.2

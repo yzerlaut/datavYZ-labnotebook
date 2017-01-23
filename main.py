@@ -95,7 +95,7 @@ class Window(QtWidgets.QMainWindow):
             self.i_plot = np.argwhere(self.FILE_LIST==self.filename)[0][0]
             self.args = initialize_quantities_given_datafile(self)
             self.update_plot()    
-        except (FileNotFoundError, ValueError, IndexError):
+        except (FileNotFoundError, ValueError, IndexError, TypeError):
             self.filename, self.folder = '', ''
             self.statusBar().showMessage('Provide a datafile of a folder for analysis ')
             # self.folder = '/tmp/' # TO be Changed for Cross-Platform implementation !!

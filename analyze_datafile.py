@@ -24,8 +24,16 @@ def default_plot(main, xlabel='time (s)', ylabel=''):
         ylabel=np.array(['$V_m$ (mV)', '$I_m$ (pA)'])[int(main.params['clamp_index'])]
     except KeyError: pass
     t, VEC = load_file(main.filename, zoom=[main.args['x1'], main.args['x2']])
-    fig, ax = plt.subplots(1, figsize=(10,5))
-    plt.subplots_adjust(left=.1, bottom=.15)
+    fig = plt.figure(figsize=(10,6))
+    plt.subplots_adjust(left=.1, bottom=.15, hspace=0)
+    if len(VEC)>6: # means LFP
+        ax = plt.subplot2grid((3,1), (0,0), rowspan=2)
+        ax2 = plt.subplot2grid((3,1), (2,0))
+        ax2.plot(t, 10*VEC[6], 'k-')
+        set_plot(ax2, xlabel='time (s)', ylabel='LFP (uV)',\
+             xlim=[main.args['x1'], main.args['x2']])
+    else:
+        ax = plt.subplot(111)
     ax.plot(t, VEC[0], 'k-')
     set_plot(ax, xlabel=xlabel, ylabel=ylabel,\
              xlim=[main.args['x1'], main.args['x2']],\

@@ -10,7 +10,6 @@ def load_file(filename, zoom=[0,np.inf]):
 
     if zoom[0]<0:
         tend = dt*int(os.path.getsize(filename)/nChannels/nEpisode/np.dtype(np.float32).itemsize)
-        print(tend)
         zoom[0] = tend+zoom[0]
         
     # loading the data file

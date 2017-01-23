@@ -6,7 +6,8 @@ from graphs.my_graph import set_plot
 
 def get_stimulus_responses(filename, window=[-100e-3, 800e-3]):
     params = get_metadata(filename)
-    t, [Vm, Iinj, LASER, UP_FLAG, Vm_LP, CMD] = BIN_load(filename)
+    t, VEC = BIN_load(filename)
+    [Vm, Iinj, LASER, UP_FLAG, Vm_LP, CMD] = [vv for vv in VEC[:6]]
     dt = (t[1]-t[0]) # dt in ms (transition times are stored in ms)
     t_window = window[0]+np.arange(int((window[1]-window[0])/dt)+1)*dt
     up_transitions = np.argwhere(np.diff(UP_FLAG)==1).flatten()
@@ -15,7 +16,7 @@ def get_stimulus_responses(filename, window=[-100e-3, 800e-3]):
     TEST_TRACES, CTRL_TRACES = [], []
     TEST_COND = {'delay':[], 'amplitude':[], 'duration':[], 'times':[]}
     CTRL_COND = {'times':[]}
-    
+
     if params['flag_for_state_stimulation']=='1': # if stimulation in Up state !
         for itup1, itup2 in zip(up_transitions[:-1], up_transitions[1:]):
             cond = (t>=t[itup1]+window[0]) & (t<=t[itup1]+window[1]) # conditions for analysis
@@ -58,6 +59,7 @@ def get_stimulus_responses(filename, window=[-100e-3, 800e-3]):
 
 def fig_with_sample_traces(t_window, TEST_TRACES, CTRL_TRACES, delay, duration,\
                            threshold=-30, color='r', N=10):
+
     # then fig with all traces
     fig, ax = plt.subplots(1, figsize=(5,3.5))
     ax.set_title('delay='+str(delay)+'ms, duration='+str(duration)+'ms, n='+\
@@ -120,6 +122,7 @@ def fig_with_average_trace(t_window, TEST_TRACES, CTRL_TRACES, delay, duration,\
     
 def make_fig(t_window, TEST_TRACES, CTRL_TRACES, TEST_COND, CTRL_COND, params,\
              threshold=-30, color='r'):
+
     FIGS = []
     delays, durations = np.unique(TEST_COND['delay']), np.unique(TEST_COND['duration'])
     for delay in delays:
@@ -131,13 +134,15 @@ def make_fig(t_window, TEST_TRACES, CTRL_TRACES, TEST_COND, CTRL_COND, params,\
                 fig1 = fig_with_sample_traces(t_window,\
                    np.array(TEST_TRACES)[i0], np.array(CTRL_TRACES)[i1], delay, duration,\
                                               color=color, threshold=threshold)
-                fig2 = fig_with_average_trace(t_window,\
-                   np.array(TEST_TRACES)[i0], np.array(CTRL_TRACES)[i1], delay, duration,\
-                                              color=color, threshold=threshold)
-                FIGS = FIGS+[fig1, fig2]
+                # fig2 = fig_with_average_trace(t_window,\
+                #    np.array(TEST_TRACES)[i0], np.array(CTRL_TRACES)[i1], delay, duration,\
+                #                               color=color, threshold=threshold)
+                # FIGS = FIGS+[fig1, fig2]
+                FIGS = FIGS+[fig1]
     return FIGS
 
 def plot_analysis(main):
+    print(main.filename)
     return make_fig(*get_stimulus_responses(main.filename))
 
 ### Response to current Pulses
