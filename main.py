@@ -15,13 +15,14 @@ def create_window(parent, FIG_LIST, with_toolbar=False):
     # # get all figures with their size !
     width, height = 0, 0
     for fig in FIG_LIST[:3]:
-        size = fig.get_size_inches()*fig.dpi*.9
+        size = fig.get_size_inches()*fig.dpi*.3
         width += size[0]
     for fig in FIG_LIST[::3]:
         height += size[1]
     
     # Window size choosen appropriately
     window = QtWidgets.QDialog()
+    # window.setGeometry(100, 150, width, height)
     window.setGeometry(100, 150, width, height)
     
     # this is the Canvas Widget that displays the `figure`
@@ -126,7 +127,8 @@ class Window(QtWidgets.QMainWindow):
     def update_plot(self):
         try:
             self.FIG_LIST = plot_data(self)
-        except ValueError: self.statusBar().showMessage('PROBLEM with datafile : '+self.filename+', Check It Manually !!')
+        except ValueError:
+            self.statusBar().showMessage('PROBLEM with datafile : '+self.filename+', Check It Manually !!')
         self.window, self.window3 = create_window(self, self.FIG_LIST, with_toolbar=self.analysis_flag)
         self.window.show()
         if self.window3 is not None:

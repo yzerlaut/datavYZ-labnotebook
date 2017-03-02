@@ -1,11 +1,12 @@
 from neo.io import AxonIO
 import numpy as np
+import os
 
 def load_file(filename, zoom=[0,np.inf]):
 
     # loading the data file
     try:
-        data = AxonIO(filename).read_block()
+        data = AxonIO(filename).read_block(lazy=False, cascade=True)
         dt =  float(data.segments[0].analogsignals[0].sampling_period)
         if zoom[0]<data.segments[0].analogsignals[0].t_start:
             zoom[0]=data.segments[0].analogsignals[0].t_start
@@ -36,4 +37,24 @@ def load_file(filename, zoom=[0,np.inf]):
         return [[], []]
     
 def get_metadata(filename):
-    return {'main_protocol':'spont-act-sampling', 'clamp_index':1}
+    fn = filename.split(os.path.sep)[-1]
+    if len(fn.split('_'))>0:
+        print(fn[3:])
+        return {'main_protocol':'classic_electrophy',
+                'protocol':'Vclamp_with_Thal_and_Cort_extra',
+                'clamp_index':2}
+    else:
+        return {'main_protocol':'spont-act-sampling', 'clamp_index':1}
+
+
+if __name__ == '__main__':
+    import sys
+    import matplotlib.pylab as plt
+    filename = sys.argv[-1]
+    # AxonIO(filename).read_block(lazy=False, cascade=True)
+    print(get_metadata(filename))
+    t, data = load_file(filename, zoom=[-5.,np.inf])
+    # for i in range(10):
+    #     plt.plot(t, data[0][i])
+    plt.plot(t, data[0])
+    plt.show()

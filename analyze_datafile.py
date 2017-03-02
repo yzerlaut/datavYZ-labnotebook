@@ -9,7 +9,6 @@ import modeling_work.choose_analysis as choose_mw_analysis
 
 def plot_data(main):
     plt.close('all')
-    print(main.filename)
     main.params = get_metadata(main.filename)
     ## CHOOSING THE ANALYSIS
     func = choose_analysis(main) # function to analyze
@@ -25,7 +24,8 @@ def default_plot(main, xlabel='time (s)', ylabel=''):
     except KeyError: pass
     t, VEC = load_file(main.filename, zoom=[main.args['x1'], main.args['x2']])
     fig = plt.figure(figsize=(10,6))
-    plt.subplots_adjust(left=.1, bottom=.15, hspace=0)
+    # plt.subplots_adjust(left=.1, bottom=.15, hspace=0)
+    plt.subplots_adjust(left=.2, bottom=.2, hspace=0)
     if len(VEC)>6: # means LFP
         ax = plt.subplot2grid((3,1), (0,0), rowspan=2)
         ax2 = plt.subplot2grid((3,1), (2,0))
@@ -59,14 +59,21 @@ def choose_analysis(main):
     return func
 
 def initialize_quantities_given_datafile(main, filename=None):
-    try:
-        main.params = get_metadata(main.filename)
-    except (FileNotFoundError, UnicodeDecodeError):
-        pass
-    if main.window2 is not None:
-        main.window2.remove_actions()
+    # 
     if filename is None:
         filename = main.filename
+    # 
+    try:
+        main.params = get_metadata(filename)
+    except (FileNotFoundError, UnicodeDecodeError):
+        pass
+    
+    if main.window2 is not None:
+        # we clean up the actions of the previously used window
+        main.window2.remove_actions()
+        
+    # if experimental data, channel 1 can have stored boundaries
+    # whereas the other channels have automatic boundaries
     if main.params['main_protocol']!='modeling_work':
         args = {'x1':0., 'x2':3., 'dx':3.} # by default
         try:
