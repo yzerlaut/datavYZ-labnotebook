@@ -35,13 +35,23 @@ def load_file(filename, zoom=[0,np.inf]):
     except FileNotFoundError:
         print('File not Found !')
         return [[], []]
-    
-def get_metadata(filename):
-    fn = filename.split(os.path.sep)[-1]
+
+def get_protocol_name(filename):
+    fn = filename.split(os.path.sep)[-1] # only the filename without path
+    protocol = '' # empty by default
     if len(fn.split('_'))>0:
-        print(fn[3:])
+        fn2 = fn.split('_')
+        for ss in fn2[3:-1]:
+            protocol+=ss+'_'
+        protocol += fn2[-1].split('.')[0] # removing extension
+    return protocol
+
+def get_metadata(filename):
+    protocol = get_protocol_name(filename)
+    print(protocol)
+    if protocol!='':
         return {'main_protocol':'classic_electrophy',
-                'protocol':'Vclamp_with_Thal_and_Cort_extra',
+                'protocol':protocol,
                 'clamp_index':2}
     else:
         return {'main_protocol':'spont-act-sampling', 'clamp_index':1}
