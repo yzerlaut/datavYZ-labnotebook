@@ -21,7 +21,8 @@ def plot_data(main):
 def default_plot(main, xlabel='time (s)', ylabel=''):
     try:
         ylabel=np.array(['$V_m$ (mV)', '$I_m$ (pA)'])[int(main.params['clamp_index'])]
-    except KeyError: pass
+    except (KeyError, IndexError) :
+        ylabel = ''
     t, VEC = load_file(main.filename, zoom=[main.args['x1'], main.args['x2']])
     fig = plt.figure(figsize=(10,6))
     # plt.subplots_adjust(left=.1, bottom=.15, hspace=0)

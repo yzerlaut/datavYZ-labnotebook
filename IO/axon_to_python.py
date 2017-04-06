@@ -48,7 +48,6 @@ def get_protocol_name(filename):
 
 def get_metadata(filename):
     protocol = get_protocol_name(filename)
-    print(protocol)
     if protocol!='':
         return {'main_protocol':'classic_electrophy',
                 'protocol':protocol,
