@@ -80,6 +80,7 @@ class Window(QtWidgets.QMainWindow):
             action.setShortcut(label.split(')')[0])
             action.triggered.connect(func)
             self.fileMenu.addAction(action)
+            
         self.btn = QtWidgets.QCheckBox("    output \n on Desktop", self)
         self.btn.move(shift+button_length, 0)
         self.btn.stateChanged.connect(self.set_analysis_folder)
@@ -89,6 +90,7 @@ class Window(QtWidgets.QMainWindow):
         self.FolderAnalysisMenu =  None
         self.FIG_LIST, self.args, self.window2, self.window3, self.params = [], {}, None, None, {}
         self.analysis_flag = False
+        self.data = None
         try:
             self.filename,self.folder,btn_state = np.load('program_data/last_datafile.npy')
             if btn_state=='False': self.btn.setChecked(False)
@@ -160,8 +162,10 @@ class Window(QtWidgets.QMainWindow):
             self.i_plot = np.argwhere(self.FILE_LIST==self.filename)[0][0]
             self.args = args
             self.update_params_and_windows()
-        except (IndexError, FileNotFoundError, NoneType):
-            self.statusBar().showMessage('/!\ No datafile found... ')
+        except FileNotFoundError:
+            pass
+        # except (IndexError, FileNotFoundError):
+        #     self.statusBar().showMessage('/!\ No datafile found... ')
 
     def folder_open(self):
         name=QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder', self.folder)

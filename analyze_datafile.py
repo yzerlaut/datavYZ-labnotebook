@@ -72,23 +72,19 @@ def initialize_quantities_given_datafile(main, filename=None):
     if main.window2 is not None:
         # we clean up the actions of the previously used window
         main.window2.remove_actions()
-        
+
     # if experimental data, channel 1 can have stored boundaries
     # whereas the other channels have automatic boundaries
     if main.params['main_protocol']!='modeling_work':
         args = {'x1':0., 'x2':3., 'dx':3.} # by default
-        try:
-            if main.params['cont_choice']=='False': # in case episode mode !
-                args = {'x1':0., 'x2':float(main.params['episode_duration']), 'dx':float(main.params['episode_duration'])}
-        except KeyError:
-            pass
-        t, VEC = load_file(filename, zoom=[args['x1'], args['x2']])
-        for i in range(len(VEC)):
-            exec("args['dy"+str(i+1)+"']=VEC["+str(i)+"].flatten().max()-VEC["+str(i)+"].flatten().min()")
-            exec("if args['dy"+str(i+1)+"']==0: args['dy"+str(i+1)+"']=1")
-            exec("args['y"+str(i+1)+"_min']=VEC["+str(i)+"].flatten().min()-args['dy"+str(i+1)+"']/10.")
-            exec("args['y"+str(i+1)+"_max']=VEC["+str(i)+"].flatten().max()+args['dy"+str(i+1)+"']/10.")
         main.window2 = FocusMenu(main)
+        # args = {'x1':0., 'x2':3., 'dx':3.} # by default
+        # t, VEC = load_file(filename, zoom=[args['x1'], args['x2']])
+        # for i in range(len(VEC)):
+        #     exec("args['dy"+str(i+1)+"']=VEC["+str(i)+"].flatten().max()-VEC["+str(i)+"].flatten().min()")
+        #     exec("if args['dy"+str(i+1)+"']==0: args['dy"+str(i+1)+"']=1")
+        #     exec("args['y"+str(i+1)+"_min']=VEC["+str(i)+"].flatten().min()-args['dy"+str(i+1)+"']/10.")
+        #     exec("args['y"+str(i+1)+"_max']=VEC["+str(i)+"].flatten().max()+args['dy"+str(i+1)+"']/10.")
     else:
         args, main.window2 = {}, None
     return args

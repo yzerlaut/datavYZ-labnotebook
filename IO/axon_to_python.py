@@ -18,23 +18,23 @@ def load_file(filename, zoom=[0,np.inf]):
             ii+=1
         tt = np.array(data.segments[ii-1].analogsignals[0].times)
         cond = (tt>=zoom[0]) & (tt<=zoom[1])
-        VEC = [tt[cond]]
+        DATA = {'t':tt[cond]}
         for j in range(1, len(data.segments[ii-1].analogsignals)+1):
-            VEC.append(np.array(data.segments[ii-1].analogsignals[j-1])[cond])
+            DATA['Ch'+str(j)] = np.array(data.segments[ii-1].analogsignals[j-1])[cond]
         ### 
         while (ii<len(data.segments)) and ((float(data.segments[min(ii,len(data.segments)-1)].analogsignals[0].t_start)<=zoom[1])):
             tt = np.array(data.segments[ii].analogsignals[0].times)
             cond = (tt>=zoom[0]) & (tt<=zoom[1])
-            VEC[0] = np.concatenate([VEC[0],\
-                np.array(data.segments[ii].analogsignals[0].times)[cond]])
+            DATA['t'] = np.concatenate([DATA['t'],\
+                                        np.array(data.segments[ii].analogsignals[0].times)[cond]])
             for j in range(1, len(data.segments[ii].analogsignals)+1):
-                VEC[j] = np.concatenate([VEC[j],\
-                    np.array(data.segments[ii].analogsignals[j-1])[cond]])
+                DATA['Ch'+str(j)] = np.concatenate([DATA['Ch'+str(j)],\
+                                                    np.array(data.segments[ii].analogsignals[j-1])[cond]])
             ii+=1
-        return VEC[0], VEC[1:]
+        return DATA
     except FileNotFoundError:
         print('File not Found !')
-        return [[], []]
+        return {}
 
 def get_protocol_name(filename):
     fn = filename.split(os.path.sep)[-1] # only the filename without path
@@ -62,8 +62,8 @@ if __name__ == '__main__':
     filename = sys.argv[-1]
     # AxonIO(filename).read_block(lazy=False, cascade=True)
     print(get_metadata(filename))
-    t, data = load_file(filename, zoom=[-5.,np.inf])
+    data = load_file(filename, zoom=[-5.,np.inf])
     # for i in range(10):
     #     plt.plot(t, data[0][i])
-    plt.plot(t, data[0])
+    plt.plot(data['t'], data['Ch1'])
     plt.show()
