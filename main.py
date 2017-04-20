@@ -12,10 +12,12 @@ from automated_analysis import analysis_window
 
 def create_window(parent, FIG_LIST, with_toolbar=False):
 
+    factor = 0.105*parent.screen_width/1280. # calibrated on 1280 screen
+    
     # # get all figures with their size !
     width, height = 0, 0
     for fig in FIG_LIST[:3]:
-        size = fig.get_size_inches()*fig.dpi*.3
+        size = fig.get_size_inches()*fig.dpi*factor
         width += size[0]
     for fig in FIG_LIST[::3]:
         height += size[1]
@@ -23,7 +25,7 @@ def create_window(parent, FIG_LIST, with_toolbar=False):
     # Window size choosen appropriately
     window = QtWidgets.QDialog()
     # window.setGeometry(100, 150, width, height)
-    window.setGeometry(100, 150, width, height)
+    window.setGeometry(20, 150, width, height)
     
     # this is the Canvas Widget that displays the `figure`
     # it takes the `figure` instance as a parameter to __init__
@@ -32,6 +34,7 @@ def create_window(parent, FIG_LIST, with_toolbar=False):
         CANVAS.append(FigureCanvas(fig))
 
     layout = QtWidgets.QGridLayout(window)
+
     for ic in range(len(CANVAS)):
         layout.addWidget(CANVAS[ic], int(ic/3), ic%3)
         
@@ -53,7 +56,7 @@ def get_list_of_files(cdir="/tmp"):
         
 class Window(QtWidgets.QMainWindow):
     
-    def __init__(self, parent=None, DATA_LIST=None, KEYS=None):
+    def __init__(self, parent=None, DATA_LIST=None, KEYS=None, screen_width=1280):
         
         super(Window, self).__init__(parent)
         
@@ -66,7 +69,8 @@ class Window(QtWidgets.QMainWindow):
         self.setWindowIcon(QtGui.QIcon('graphs/logo.png'))
         self.setWindowTitle('.-* datavYZ *-.   Data analysis and vizualization software -')
         self.setGeometry(50, 50, button_length*(1+len(LABELS)), 60)
-
+        self.screen_width = screen_width
+        
         mainMenu = self.menuBar()
         self.fileMenu = mainMenu.addMenu('&File')
         
@@ -131,7 +135,8 @@ class Window(QtWidgets.QMainWindow):
             self.FIG_LIST = plot_data(self)
         except ValueError:
             self.statusBar().showMessage('PROBLEM with datafile : '+self.filename+', Check It Manually !!')
-        self.window, self.window3 = create_window(self, self.FIG_LIST, with_toolbar=self.analysis_flag)
+        self.window, self.window3 = create_window(self, self.FIG_LIST,
+                                                  with_toolbar=self.analysis_flag)
         self.window.show()
         if self.window3 is not None:
             self.window3.show()
@@ -264,6 +269,6 @@ set_plot(ax, xlabel='x (units)', ylabel='count')
 """)
     
     app = QtWidgets.QApplication(sys.argv)
-    main = Window()
+    main = Window(screen_width=app.desktop().availableGeometry().width())
     main.show()
     sys.exit(app.exec_())

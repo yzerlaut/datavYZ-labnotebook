@@ -9,8 +9,7 @@ class FocusMenu(QtWidgets.QDialog):
         self.parent = parent
         self.setWindowIcon(QtGui.QIcon('logo.png'))
         self.setWindowTitle('Window Focus')
-        # self.setGeometry(900,150,300,500)
-        self.setGeometry(880,150,120,150)
+        self.setGeometry(parent.screen_width-300,150,120,170)
 
         self.ACTIONS = []
         self.set_grid_and_actions()
@@ -49,10 +48,25 @@ class FocusMenu(QtWidgets.QDialog):
                 self.ACTIONS.append(action)
                 self.parent.fileMenu.addAction(action)
 
+        self.sl = QtWidgets.QSlider(QtCore.Qt.Horizontal, self)
+        self.sl.setGeometry(60, 150, 320, 20)
+        self.sl.setMinimum(0)
+        self.sl.setMaximum(100)
+        self.sl.setValue(0)
+        self.sl.setTickInterval(1)
+        self.sl.valueChanged.connect(self.valuechange)
+        
     def remove_actions(self):
         for action in self.ACTIONS:
             self.parent.fileMenu.removeAction(action)
 
+    def valuechange(self):
+        size = self.sl.value()
+        self.parent.args['x1'] = self.parent.args['xmin']+\
+                                 size/100.*(self.parent.args['xmax']-self.parent.args['xmin'])
+        self.parent.args['x2'] = self.parent.args['x1']+self.parent.args['dx']
+        self.parent.update_plot()
+      
     def xzoom_in(self):
         self.parent.args['dx'] /=2.
         self.parent.args['x1'] = self.parent.args['x1']+self.parent.args['dx']/2.

@@ -19,6 +19,7 @@ def load_file(filename, zoom=[0,np.inf]):
         tt = np.array(data.segments[ii-1].analogsignals[0].times)
         cond = (tt>=zoom[0]) & (tt<=zoom[1])
         DATA = {'t':tt[cond]}
+        DATA['tmin'], DATA['tmax'] = tt[0], tt[-1] # adding tmin and tmax
         for j in range(1, len(data.segments[ii-1].analogsignals)+1):
             DATA['Ch'+str(j)] = np.array(data.segments[ii-1].analogsignals[j-1])[cond]
         ### 

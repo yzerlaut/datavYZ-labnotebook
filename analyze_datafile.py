@@ -77,9 +77,11 @@ def initialize_quantities_given_datafile(main, filename=None):
     # whereas the other channels have automatic boundaries
     if main.params['main_protocol']!='modeling_work':
         args = {'x1':0., 'x2':3., 'dx':3.} # by default
+
         main.window2 = FocusMenu(main)
-        # args = {'x1':0., 'x2':3., 'dx':3.} # by default
-        # t, VEC = load_file(filename, zoom=[args['x1'], args['x2']])
+
+        data = load_file(filename, zoom=[args['x1'], args['x2']])
+        args['xmin'], args['xmax'] = data['tmin'], data['tmax']
         # for i in range(len(VEC)):
         #     exec("args['dy"+str(i+1)+"']=VEC["+str(i)+"].flatten().max()-VEC["+str(i)+"].flatten().min()")
         #     exec("if args['dy"+str(i+1)+"']==0: args['dy"+str(i+1)+"']=1")
