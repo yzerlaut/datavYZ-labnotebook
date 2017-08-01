@@ -19,7 +19,7 @@ def load_file(filename, zoom=[0,np.inf]):
         tt = np.array(data.segments[ii-1].analogsignals[0].times)
         cond = (tt>=zoom[0]) & (tt<=zoom[1])
         DATA = {'t':tt[cond]}
-        DATA['tmin'], DATA['tmax'] = tt[0], tt[-1] # adding tmin and tmax
+
         for j in range(1, len(data.segments[ii-1].analogsignals)+1):
             DATA['Ch'+str(j)] = np.array(data.segments[ii-1].analogsignals[j-1])[cond]
         ### 
@@ -48,23 +48,33 @@ def get_protocol_name(filename):
     return protocol
 
 def get_metadata(filename):
+    
+    params = {'main_protocol':'undefined', 'protocol':'undefined'}
+    # loading metadata
+    data = AxonIO(filename).read_block(lazy=False, cascade=True)
+    params['dt'] =  float(data.segments[0].analogsignals[0].sampling_period)
+    params['tstart'] = float(data.segments[0].analogsignals[0].times[0])
+    params['tstop'] = float(data.segments[0].analogsignals[0].times[-1])
+    params['Nepisodes'] = len(data.segments)
+    params['Nchannels'] = len(data.segments[0].analogsignals)
+    
+    # prtocol name in case
     protocol = get_protocol_name(filename)
     if protocol!='':
-        return {'main_protocol':'classic_electrophy',
-                'protocol':protocol,
-                'clamp_index':2}
-    else:
-        return {'main_protocol':'spont-act-sampling', 'clamp_index':1}
+        params['protocol'] = protocol
+        params['main_protocol'] = 'classic_electrophy'
+
+    return params
 
 
 if __name__ == '__main__':
     import sys
     import matplotlib.pylab as plt
     filename = sys.argv[-1]
-    # AxonIO(filename).read_block(lazy=False, cascade=True)
+    data = AxonIO(filename).read_block(lazy=False, cascade=True)
     print(get_metadata(filename))
-    data = load_file(filename, zoom=[-5.,np.inf])
-    # for i in range(10):
-    #     plt.plot(t, data[0][i])
-    plt.plot(data['t'], data['Ch1'])
-    plt.show()
+    # data = load_file(filename, zoom=[-5.,np.inf])
+    # # for i in range(10):
+    # #     plt.plot(t, data[0][i])
+    # plt.plot(data['t'], data['Ch1'])
+    # plt.show()

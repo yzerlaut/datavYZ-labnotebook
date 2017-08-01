@@ -62,8 +62,8 @@ class FocusMenu(QtWidgets.QDialog):
 
     def valuechange(self):
         size = self.sl.value()
-        self.parent.args['x1'] = self.parent.args['xmin']+\
-                                 size/100.*(self.parent.args['xmax']-self.parent.args['xmin'])
+        self.parent.args['x1'] = self.parent.params['tstart']+\
+                                 size/100.*(self.parent.params['tstop']-self.parent.params['tstart'])
         self.parent.args['x2'] = self.parent.args['x1']+self.parent.args['dx']
         self.parent.update_plot()
       
@@ -78,14 +78,16 @@ class FocusMenu(QtWidgets.QDialog):
         self.parent.args['x2'] = self.parent.args['x1']+self.parent.args['dx']
         self.parent.update_plot()
     def yzoom_in(self):
-        self.parent.args['dy1'] /=2.
-        self.parent.args['y1_min'] = self.parent.args['y1_min']+self.parent.args['dy1']/2.
-        self.parent.args['y1_max'] = self.parent.args['y1_min']+self.parent.args['dy1']
+        print('to be re-implemented, broken')
+        # self.parent.args['dy1'] /=2.
+        # self.parent.args['y1_min'] = self.parent.args['y1_min']+self.parent.args['dy1']/2.
+        # self.parent.args['y1_max'] = self.parent.args['y1_min']+self.parent.args['dy1']
         self.parent.update_plot()
     def yzoom_out(self):
-        self.parent.args['dy1'] *=2.
-        self.parent.args['y1_min'] = self.parent.args['y1_min']-self.parent.args['dy1']/4.
-        self.parent.args['y1_max'] = self.parent.args['y1_min']+self.parent.args['dy1']
+        print('to be re-implemented, broken')
+        # self.parent.args['dy1'] *=2.
+        # self.parent.args['y1_min'] = self.parent.args['y1_min']-self.parent.args['dy1']/4.
+        # self.parent.args['y1_max'] = self.parent.args['y1_min']+self.parent.args['dy1']
         self.parent.update_plot()
     def xshift_right(self):
         self.parent.args['x1'] += self.parent.args['dx']/3.
@@ -96,10 +98,12 @@ class FocusMenu(QtWidgets.QDialog):
         self.parent.args['x2'] -= self.parent.args['dx']/3.
         self.parent.update_plot()
     def yshift_up(self):
-        self.parent.args['y1_min'] += self.parent.args['dy1']/3.
-        self.parent.args['y1_max'] += self.parent.args['dy1']/3.
+        print('to be re-implemented, broken')
+        # self.parent.args['y1_min'] += self.parent.args['dy1']/3.
+        # self.parent.args['y1_max'] += self.parent.args['dy1']/3.
         self.parent.update_plot()
     def yshift_bottom(self):
-        self.parent.args['y1_min'] -= self.parent.args['dy1']/3.
-        self.parent.args['y1_max'] -= self.parent.args['dy1']/3.
+        print('to be re-implemented, broken')
+        # self.parent.args['y1_min'] -= self.parent.args['dy1']/3.
+        # self.parent.args['y1_max'] -= self.parent.args['dy1']/3.
         self.parent.update_plot()

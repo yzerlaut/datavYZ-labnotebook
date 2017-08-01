@@ -5,14 +5,19 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from PyQt5 import QtGui, QtWidgets, QtCore
 import numpy as np
-from analyze_datafile import plot_data, initialize_quantities_given_datafile, save_as_npz
+from analyze_datafile import plot_data, load_data_and_initialize, save_as_npz
 from IO.files_manip import get_files_with_given_exts, rename_files_for_easy_sorting
 from graphs.my_graph import make_multipanel_fig
 from automated_analysis import analysis_window
+from IO.load_data import load_file, get_metadata
 
 def create_window(parent, FIG_LIST, with_toolbar=False):
 
-    factor = 0.105*parent.screen_width/1280. # calibrated on 1280 screen
+    if parent.screen_width==1280:
+        factor = 0.105
+    elif parent.screen_width==1920.:
+        factor = 0.3
+
     
     # # get all figures with their size !
     width, height = 0, 0
@@ -94,13 +99,13 @@ class Window(QtWidgets.QMainWindow):
         self.FolderAnalysisMenu =  None
         self.FIG_LIST, self.args, self.window2, self.window3, self.params = [], {}, None, None, {}
         self.analysis_flag = False
-        self.data = None
+        self.data = None # DICTIONARY STORING THE DATA !
         try:
             self.filename,self.folder,btn_state = np.load('program_data/last_datafile.npy')
             if btn_state=='False': self.btn.setChecked(False)
             self.FILE_LIST = get_list_of_files(self.folder)
             self.i_plot = np.argwhere(self.FILE_LIST==self.filename)[0][0]
-            self.args = initialize_quantities_given_datafile(self)
+            load_data_and_initialize(self)
             self.update_plot()    
         except (FileNotFoundError, ValueError, IndexError, TypeError):
             self.filename, self.folder = '', ''
@@ -134,7 +139,8 @@ class Window(QtWidgets.QMainWindow):
         try:
             self.FIG_LIST = plot_data(self)
         except ValueError:
-            self.statusBar().showMessage('PROBLEM with datafile : '+self.filename+', Check It Manually !!')
+            self.statusBar().showMessage('PROBLEM with datafile : '+\
+                                         self.filename+', Check It Manually !!')
         self.window, self.window3 = create_window(self, self.FIG_LIST,
                                                   with_toolbar=self.analysis_flag)
         self.window.show()
@@ -144,7 +150,7 @@ class Window(QtWidgets.QMainWindow):
         self.activateWindow()
         
     def update_params_and_windows(self):
-        self.args = initialize_quantities_given_datafile(self)
+        load_data_and_initialize(self)
         self.update_plot()
         
     def close_app(self):
@@ -159,18 +165,16 @@ class Window(QtWidgets.QMainWindow):
         if self.FolderAnalysisMenu is not None:
             self.FolderAnalysisMenu.close()
         try:
-            args = initialize_quantities_given_datafile(self, filename=name[0])
             self.filename = name[0]
+            load_data_and_initialize(self)
             self.folder = os.path.dirname(self.filename)
             self.set_analysis_folder()
             self.FILE_LIST = get_list_of_files(self.folder)
             self.i_plot = np.argwhere(self.FILE_LIST==self.filename)[0][0]
-            self.args = args
             self.update_params_and_windows()
         except FileNotFoundError:
+            # self.statusBar().showMessage('/!\ No datafile found... ')
             pass
-        # except (IndexError, FileNotFoundError):
-        #     self.statusBar().showMessage('/!\ No datafile found... ')
 
     def folder_open(self):
         name=QtWidgets.QFileDialog.getExistingDirectory(self, 'Select Folder', self.folder)
