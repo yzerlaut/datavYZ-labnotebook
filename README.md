@@ -2,13 +2,7 @@
 
 __- * datavYZ * -__
 
-A software for:
-
-* data analysis
-* data visualization 
-* publication-quality figure production
-
-in neurophysiological research.
+A software to quickly visualize the output of your experiments and produce figures on the fly for your laboratory notebooks after an experimental session
 
 ### How do I get set up? ###
 
